@@ -104,6 +104,45 @@ class AdminContentTest extends TestCase
         Storage::disk('public')->assertMissing(str_replace('/storage/', '', $profileImage));
     }
 
+    public function test_admin_can_edit_the_letter_and_final_reveal_content(): void
+    {
+        $settings = ExperienceContent::query()->create([
+            'type' => 'settings',
+            'payload' => [
+                'partner_two_name' => 'Cassy',
+                'access_code' => '2102',
+            ],
+            'display_order' => 1,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->post("/admin/content/{$settings->id}", [
+                'type' => 'settings',
+                'partner_two_name' => 'Cassy',
+                'access_code' => '2102',
+                'letter_title' => 'Une lettre rien que pour toi',
+                'letter_body' => "Ma vie,\nVoici notre histoire.",
+                'letter_signature' => 'Only You.',
+                'final_intro_title' => "Notre histoire,\nnotre univers.",
+                'final_reveal_lines' => "Premier chapitre.\nEt ce n’est que le début.",
+                'final_question' => 'On continue ensemble ?',
+                'final_primary_answer' => 'Toujours ❤️',
+                'final_secondary_answer' => 'Évidemment ❤️',
+                'final_gift_title' => 'Ce monde est à nous.',
+                'final_gift_lines' => "Aujourd’hui.\nDemain.\nToujours.",
+                'is_active' => true,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $settings->refresh();
+
+        $this->assertSame('Une lettre rien que pour toi', $settings->payload['letter_title']);
+        $this->assertSame('On continue ensemble ?', $settings->payload['final_question']);
+        $this->assertSame("Aujourd’hui.\nDemain.\nToujours.", $settings->payload['final_gift_lines']);
+    }
+
     public function test_admin_cannot_upload_music_larger_than_twelve_megabytes(): void
     {
         Storage::fake('public');

@@ -17,19 +17,41 @@ const REVEAL_LINES = [
 
 type Phase = 'intro' | 'lines' | 'question' | 'answered' | 'gift';
 
+function configuredLines(value: string | undefined, fallback: string[]) {
+    const lines = value
+        ?.split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+    return lines?.length ? lines : fallback;
+}
+
 export default function FinalReveal({
     onBack,
     soundEnabled,
     onToggleSound,
+    content,
 }: SectionProps) {
+    const settings = content?.settings?.[0];
     const [phase, setPhase] = useState<Phase>('intro');
     const [lineIndex, setLineIndex] = useState(0);
     const [answer, setAnswer] = useState<string | null>(null);
+    const revealLines = configuredLines(
+        settings?.final_reveal_lines,
+        REVEAL_LINES,
+    );
+    const giftLines = configuredLines(settings?.final_gift_lines, [
+        'Cinq mois avec My Peace.',
+        'Et je choisirais encore Only You.',
+    ]);
+    const primaryAnswer = settings?.final_primary_answer || 'Si si, ma vie ❤️';
+    const secondaryAnswer =
+        settings?.final_secondary_answer || 'Oui, mais tu me dois un burger 🍔';
 
     const startReveal = () => setPhase('lines');
 
     const nextLine = () => {
-        if (lineIndex < REVEAL_LINES.length - 1) {
+        if (lineIndex < revealLines.length - 1) {
             setLineIndex(lineIndex + 1);
         } else {
             setPhase('question');
@@ -117,20 +139,18 @@ export default function FinalReveal({
                         >
                             <Heart className="glow-pink mx-auto h-12 w-12 fill-pink text-pink" />
                         </motion.div>
-                        <h1 className="text-gradient-pink mb-2 font-heading text-2xl">
-                            Happy five months,
-                        </h1>
-                        <h1 className="text-gradient-pink mb-6 font-heading text-2xl">
-                            My Peace.
+                        <h1 className="text-gradient-pink mb-6 font-heading text-2xl whitespace-pre-line">
+                            {settings?.final_intro_title ||
+                                'Happy five months,\nMy Peace.'}
                         </h1>
                         <p className="mb-8 text-sm text-silver/50">
-                            From Only You.
+                            {settings?.final_intro_subtitle || 'From Only You.'}
                         </p>
                         <button
                             onClick={startReveal}
                             className="glass-pink glow-pink rounded-full px-6 py-3 text-sm text-powder transition-all hover:bg-pink/15 active:scale-95"
                         >
-                            Continuer
+                            {settings?.final_continue_label || 'Continuer'}
                         </button>
                     </motion.div>
                 )}
@@ -154,7 +174,7 @@ export default function FinalReveal({
                                         : 'text-cream/90'
                                 }`}
                             >
-                                {REVEAL_LINES[lineIndex]}
+                                {revealLines[lineIndex]}
                             </motion.p>
                         </AnimatePresence>
                         <motion.p
@@ -162,7 +182,8 @@ export default function FinalReveal({
                             transition={{ duration: 2, repeat: Infinity }}
                             className="absolute bottom-8 text-xs text-silver/30"
                         >
-                            Touche pour continuer
+                            {settings?.final_tap_hint ||
+                                'Touche pour continuer'}
                         </motion.p>
                     </div>
                 )}
@@ -175,25 +196,21 @@ export default function FinalReveal({
                         transition={{ duration: 0.8 }}
                     >
                         <p className="mb-8 font-heading text-xl leading-relaxed text-cream">
-                            Veux-tu continuer à écrire les prochains chapitres
-                            avec moi ?
+                            {settings?.final_question ||
+                                'Veux-tu continuer à écrire les prochains chapitres avec moi ?'}
                         </p>
                         <div className="space-y-3">
                             <button
-                                onClick={() => handleAnswer('Si si, ma vie ❤️')}
+                                onClick={() => handleAnswer(primaryAnswer)}
                                 className="glow-pink w-full rounded-2xl bg-gradient-to-r from-pink to-pink-vibrant py-4 font-body text-sm text-white transition-all active:scale-95"
                             >
-                                Si si, ma vie ❤️
+                                {primaryAnswer}
                             </button>
                             <button
-                                onClick={() =>
-                                    handleAnswer(
-                                        'Oui, mais tu me dois un burger 🍔',
-                                    )
-                                }
+                                onClick={() => handleAnswer(secondaryAnswer)}
                                 className="glass w-full rounded-2xl py-4 font-body text-sm text-powder transition-all hover:bg-pink/10 active:scale-95"
                             >
-                                Oui, mais tu me dois un burger 🍔
+                                {secondaryAnswer}
                             </button>
                         </div>
                     </motion.div>
@@ -227,19 +244,22 @@ export default function FinalReveal({
                     >
                         <Gift className="mx-auto mb-4 h-12 w-12 text-gold" />
                         <h2 className="text-gradient-gold mb-3 font-heading text-2xl">
-                            Ton cadeau, c’est cet univers.
+                            {settings?.final_gift_title ||
+                                'Ton cadeau, c’est cet univers.'}
                         </h2>
                         <p className="mb-6 text-sm leading-relaxed text-cream/70">
-                            Un endroit créé pour toi, pour nous, et pour les
-                            souvenirs que je ne veux jamais perdre.
+                            {settings?.final_gift_message ||
+                                'Un endroit créé pour toi, pour nous, et pour les souvenirs que je ne veux jamais perdre.'}
                         </p>
                         <div className="glass-pink rounded-2xl p-5">
-                            <p className="font-handwriting text-xl leading-snug text-powder">
-                                Cinq mois avec My Peace.
-                            </p>
-                            <p className="font-handwriting text-xl leading-snug text-powder">
-                                Et je choisirais encore Only You.
-                            </p>
+                            {giftLines.map((line) => (
+                                <p
+                                    key={line}
+                                    className="font-handwriting text-xl leading-snug text-powder"
+                                >
+                                    {line}
+                                </p>
+                            ))}
                         </div>
                     </motion.div>
                 )}

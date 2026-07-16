@@ -24,6 +24,22 @@ export type CoupleSettings = {
     social_subtitle?: string;
     playlist_title?: string;
     playlist_subtitle?: string;
+    letter_title?: string;
+    letter_subtitle?: string;
+    letter_body?: string;
+    letter_signature?: string;
+    letter_footer?: string;
+    final_intro_title?: string;
+    final_intro_subtitle?: string;
+    final_continue_label?: string;
+    final_reveal_lines?: string;
+    final_tap_hint?: string;
+    final_question?: string;
+    final_primary_answer?: string;
+    final_secondary_answer?: string;
+    final_gift_title?: string;
+    final_gift_message?: string;
+    final_gift_lines?: string;
 };
 
 export type Memory = {

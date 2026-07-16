@@ -22,6 +22,22 @@ class ExperienceContentSeeder extends Seeder
             'intro_title' => 'ONLY YOU × MY PEACE',
             'intro_subtitle' => 'Chapter Five',
             'intro_lines' => "Certaines histoires commencent par des messages…\nLa nôtre a commencé au bord du fleuve.\nCe jour-là, sans le savoir, nous écrivions déjà notre premier chapitre.\nEt depuis, chaque instant avec toi donne un peu plus de sens au mot « nous ».",
+            'letter_title' => 'To My Peace, from Only You',
+            'letter_subtitle' => 'Une lettre, fragment par fragment',
+            'letter_body' => "Ma vie,\nCela fait maintenant cinq mois que notre histoire a commencé, et j’ai parfois l’impression que le temps passe trop vite.\nDepuis ce moment au bord du fleuve, tu as pris une place importante dans ma vie.\nTu arrives encore à me surprendre. Chaque fois que je te vois, je découvre quelque chose de nouveau, et je tombe encore plus amoureux de toi.\nJ’aime tes beaux yeux, ton énergie, ta personnalité, ta manière d’être toi-même et la paix que tu m’apportes.\nJe ne prétends pas que tout sera toujours parfait. Mais je veux que tu saches une chose : je t’aime et je serai toujours là pour toi.\nCe site est mon cadeau. Ce n’est pas seulement une page avec des photos. C’est un morceau de notre histoire, un endroit où j’ai voulu conserver ce que nous avons déjà vécu.\nMerci pour ces cinq mois, My Peace.\nEt surtout, merci d’être toi.",
+            'letter_signature' => 'Only You.',
+            'letter_footer' => 'Si si, ma vie. Chaque mot est sincère.',
+            'final_intro_title' => "Happy five months,\nMy Peace.",
+            'final_intro_subtitle' => 'From Only You.',
+            'final_continue_label' => 'Continuer',
+            'final_reveal_lines' => "Cinq mois, ce n’est peut-être que le début.\nMais c’est déjà assez pour savoir que chaque moment avec toi mérite d’être conservé.\nTu me surprends encore.\nTu m’apportes de la paix.\nEt chaque fois que je te vois, je tombe encore plus amoureux de toi.\nJe t’aime, Cassy.\nEt je serai toujours là pour toi.",
+            'final_tap_hint' => 'Touche pour continuer',
+            'final_question' => 'Veux-tu continuer à écrire les prochains chapitres avec moi ?',
+            'final_primary_answer' => 'Si si, ma vie ❤️',
+            'final_secondary_answer' => 'Oui, mais tu me dois un burger 🍔',
+            'final_gift_title' => 'Ton cadeau, c’est cet univers.',
+            'final_gift_message' => 'Un endroit créé pour toi, pour nous, et pour les souvenirs que je ne veux jamais perdre.',
+            'final_gift_lines' => "Cinq mois avec My Peace.\nEt je choisirais encore Only You.",
         ]]);
 
         $this->seed('love_reasons', collect([

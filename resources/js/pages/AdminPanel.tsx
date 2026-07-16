@@ -128,6 +128,64 @@ const CONTENT_CONFIG: Record<
             { key: 'social_subtitle', label: 'Sous-titre des publications' },
             { key: 'playlist_title', label: 'Titre de la playlist' },
             { key: 'playlist_subtitle', label: 'Sous-titre de la playlist' },
+            { key: 'letter_title', label: 'Lettre — Titre' },
+            { key: 'letter_subtitle', label: 'Lettre — Sous-titre' },
+            {
+                key: 'letter_body',
+                label: 'Lettre — Corps (un paragraphe par ligne)',
+                type: 'textarea',
+            },
+            { key: 'letter_signature', label: 'Lettre — Signature' },
+            { key: 'letter_footer', label: 'Lettre — Phrase finale' },
+            {
+                key: 'final_intro_title',
+                label: 'Final Reveal — Titre d’introduction',
+                type: 'textarea',
+            },
+            {
+                key: 'final_intro_subtitle',
+                label: 'Final Reveal — Signature d’introduction',
+            },
+            {
+                key: 'final_continue_label',
+                label: 'Final Reveal — Texte du bouton Continuer',
+            },
+            {
+                key: 'final_reveal_lines',
+                label: 'Final Reveal — Phrases (une phrase par ligne)',
+                type: 'textarea',
+            },
+            {
+                key: 'final_tap_hint',
+                label: 'Final Reveal — Indication pour continuer',
+            },
+            {
+                key: 'final_question',
+                label: 'Final Reveal — Question',
+                type: 'textarea',
+            },
+            {
+                key: 'final_primary_answer',
+                label: 'Final Reveal — Première réponse',
+            },
+            {
+                key: 'final_secondary_answer',
+                label: 'Final Reveal — Deuxième réponse',
+            },
+            {
+                key: 'final_gift_title',
+                label: 'Final Reveal — Titre du cadeau',
+            },
+            {
+                key: 'final_gift_message',
+                label: 'Final Reveal — Message du cadeau',
+                type: 'textarea',
+            },
+            {
+                key: 'final_gift_lines',
+                label: 'Final Reveal — Dernières phrases (une par ligne)',
+                type: 'textarea',
+            },
         ],
     },
     memories: {

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Feather, SkipForward } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SectionLayout from '@/components/experience/SectionLayout';
 import type { SectionProps } from '@/types/experience';
 
@@ -45,20 +45,42 @@ export default function InteractiveLetter({
     onBack,
     soundEnabled,
     onToggleSound,
+    content,
 }: SectionProps) {
+    const settings = content?.settings?.[0];
     const reduceMotion = useReducedMotion();
     const [paragraphIndex, setParagraphIndex] = useState(0);
     const [characterIndex, setCharacterIndex] = useState(0);
     const [finished, setFinished] = useState(false);
     const currentParagraphRef = useRef<HTMLParagraphElement>(null);
     const showCompleteLetter = finished || Boolean(reduceMotion);
+    const letterParagraphs = useMemo(() => {
+        const customBody = settings?.letter_body
+            ?.split('\n')
+            .map((text) => text.trim())
+            .filter(Boolean);
+        const body = customBody?.length
+            ? customBody.map((text, index) => ({
+                  text,
+                  type: index === 0 ? 'handwriting' : undefined,
+              }))
+            : LETTER_PARAGRAPHS.slice(0, -1);
+
+        return [
+            ...body,
+            {
+                text: settings?.letter_signature || 'Only You.',
+                type: 'signature',
+            },
+        ];
+    }, [settings?.letter_body, settings?.letter_signature]);
 
     useEffect(() => {
         if (showCompleteLetter) {
             return;
         }
 
-        const paragraph = LETTER_PARAGRAPHS[paragraphIndex];
+        const paragraph = letterParagraphs[paragraphIndex];
         const characters = Array.from(paragraph.text);
 
         if (characterIndex < characters.length) {
@@ -70,7 +92,7 @@ export default function InteractiveLetter({
             return () => window.clearTimeout(timeout);
         }
 
-        if (paragraphIndex < LETTER_PARAGRAPHS.length - 1) {
+        if (paragraphIndex < letterParagraphs.length - 1) {
             const timeout = window.setTimeout(() => {
                 setParagraphIndex((current) => current + 1);
                 setCharacterIndex(0);
@@ -82,7 +104,7 @@ export default function InteractiveLetter({
         const timeout = window.setTimeout(() => setFinished(true), 500);
 
         return () => window.clearTimeout(timeout);
-    }, [characterIndex, paragraphIndex, showCompleteLetter]);
+    }, [characterIndex, letterParagraphs, paragraphIndex, showCompleteLetter]);
 
     useEffect(() => {
         if (paragraphIndex < 2 || showCompleteLetter) {
@@ -101,8 +123,10 @@ export default function InteractiveLetter({
 
     return (
         <SectionLayout
-            title="To My Peace, from Only You"
-            subtitle="Une lettre, fragment par fragment"
+            title={settings?.letter_title || 'To My Peace, from Only You'}
+            subtitle={
+                settings?.letter_subtitle || 'Une lettre, fragment par fragment'
+            }
             onBack={onBack}
             soundEnabled={soundEnabled}
             onToggleSound={onToggleSound}
@@ -135,7 +159,7 @@ export default function InteractiveLetter({
                 )}
 
                 <div className="relative min-h-48 space-y-5">
-                    {LETTER_PARAGRAPHS.map((para, index) => {
+                    {letterParagraphs.map((para, index) => {
                         if (!showCompleteLetter && index > paragraphIndex) {
                             return null;
                         }
@@ -192,7 +216,8 @@ export default function InteractiveLetter({
                         transition={{ duration: 0.8, delay: 0.3 }}
                         className="mt-6 text-center font-handwriting text-base text-xs text-silver/30"
                     >
-                        Si si, ma vie. Chaque mot est sincère.
+                        {settings?.letter_footer ||
+                            'Si si, ma vie. Chaque mot est sincère.'}
                     </motion.p>
                 )}
             </AnimatePresence>
