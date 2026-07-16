@@ -31,6 +31,7 @@ export default function LoveReasons({
     const reasons = content?.love_reasons?.length
         ? content.love_reasons.map((reason) => reason.content)
         : FALLBACK_REASONS;
+    const settings = content?.settings?.[0];
     const [current, setCurrent] = useState<{
         text: string;
         index: number;
@@ -78,8 +79,10 @@ export default function LoveReasons({
 
     return (
         <SectionLayout
-            title="Why I Love You"
-            subtitle="Chaque étoile cache une raison"
+            title={settings?.reasons_title || 'Why I Love You'}
+            subtitle={
+                settings?.reasons_subtitle || 'Chaque étoile cache une raison'
+            }
             onBack={onBack}
             soundEnabled={soundEnabled}
             onToggleSound={onToggleSound}

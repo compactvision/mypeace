@@ -16,6 +16,12 @@ class ExperienceContentSeeder extends Seeder
             'influencer_name' => 'arky N',
             'primary_message' => 'The girl who keeps surprising me.',
             'access_code' => '2102',
+            'lock_title' => 'Created for My Peace',
+            'lock_byline' => 'By Only You',
+            'special_date' => '2026-07-21',
+            'intro_title' => 'ONLY YOU × MY PEACE',
+            'intro_subtitle' => 'Chapter Five',
+            'intro_lines' => "Certaines histoires commencent par des messages…\nLa nôtre a commencé au bord du fleuve.\nCe jour-là, sans le savoir, nous écrivions déjà notre premier chapitre.\nEt depuis, chaque instant avec toi donne un peu plus de sens au mot « nous ».",
         ]]);
 
         $this->seed('love_reasons', collect([
@@ -50,6 +56,14 @@ class ExperienceContentSeeder extends Seeder
             ['title' => 'Main character', 'category' => 'looks', 'memory_date' => '2026-06-08', 'location' => 'Kinshasa', 'behind_story' => 'Tu étais prête en cinq minutes. Moi, pas prêt du tout à te voir aussi belle.'],
             ['title' => 'Ces yeux', 'category' => 'beaux_yeux', 'memory_date' => '2026-05-02', 'location' => 'Quelque part entre deux éclats de rire', 'behind_story' => 'Une photo prise vite, un regard que je pourrais contempler longtemps.'],
             ['title' => 'Le souvenir secret', 'category' => 'secret', 'memory_date' => '2026-07-01', 'location' => 'Notre endroit', 'behind_story' => 'Celui-ci ne s’explique pas. Il se vit, puis il se garde précieusement.'],
+        ]);
+
+        $this->seed('playlist', [
+            ['title' => 'PARTYNEXTDOOR', 'artist' => 'Featured', 'desc' => 'L’artiste qui colle à notre ambiance.', 'featured' => true],
+            ['title' => 'Midnight vibes', 'artist' => 'R&B', 'desc' => 'Pour les soirées à ne rien faire, juste nous deux.'],
+            ['title' => 'Golden hour', 'artist' => 'R&B', 'desc' => 'Comme la lumière au bord du fleuve.'],
+            ['title' => 'Still falling', 'artist' => 'R&B', 'desc' => 'Parce que oui, je tombe encore.'],
+            ['title' => 'My Peace', 'artist' => 'R&B', 'desc' => 'Toi. Juste toi.'],
         ]);
     }
 

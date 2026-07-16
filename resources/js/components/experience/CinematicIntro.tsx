@@ -1,50 +1,78 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Headphones } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import type { CoupleSettings } from '@/types/experience';
 
 const LINES = [
-    { text: 'Certaines histoires commencent avec un message.', delay: 0.8 },
-    { text: 'La nôtre a commencé au bord du fleuve.', delay: 3.2 },
-    {
-        text: 'Le 21 février 2026, quelque chose de nouveau a commencé.',
-        delay: 5.6,
-    },
-    { text: 'Cinq mois plus tard…', delay: 8.0 },
+    'Certaines histoires commencent par des messages…',
+    'La nôtre a commencé au bord du fleuve.',
+    'Ce jour-là, sans le savoir, nous écrivions déjà notre premier chapitre.',
+    'Et depuis, chaque instant avec toi donne un peu plus de sens au mot « nous ».',
 ];
+
+const LINE_DURATION = 5000;
+const FINAL_TRANSITION_DURATION = 1800;
 
 type Props = {
     onEnter: () => void;
     soundEnabled: boolean;
     onToggleSound: () => void;
+    settings?: CoupleSettings | null;
 };
 
 export default function CinematicIntro({
     onEnter,
     soundEnabled,
     onToggleSound,
+    settings,
 }: Props) {
+    const [started, setStarted] = useState(false);
     const [step, setStep] = useState(0);
-    const [showButton, setShowButton] = useState(false);
     const [transitioning, setTransitioning] = useState(false);
 
+    const lines = useMemo(() => {
+        const customLines = settings?.intro_lines
+            ?.split('\n')
+            .map((text) => text.trim())
+            .filter(Boolean);
+
+        return customLines?.length ? customLines : LINES;
+    }, [settings]);
+
     useEffect(() => {
-        if (step < LINES.length) {
-            const t = setTimeout(
-                () => setStep(step + 1),
-                LINES[step].delay - (step > 0 ? LINES[step - 1].delay : 0),
+        if (!started) {
+            return;
+        }
+
+        if (step < lines.length - 1) {
+            const timeout = window.setTimeout(
+                () => setStep((current) => current + 1),
+                LINE_DURATION,
             );
 
-            return () => clearTimeout(t);
-        } else {
-            const t = setTimeout(() => setShowButton(true), 800);
-
-            return () => clearTimeout(t);
+            return () => window.clearTimeout(timeout);
         }
-    }, [step]);
+
+        const transitionTimeout = window.setTimeout(() => {
+            setTransitioning(true);
+        }, LINE_DURATION);
+        const enterTimeout = window.setTimeout(() => {
+            onEnter();
+        }, LINE_DURATION + FINAL_TRANSITION_DURATION);
+
+        return () => {
+            window.clearTimeout(transitionTimeout);
+            window.clearTimeout(enterTimeout);
+        };
+    }, [started, step, lines.length, onEnter]);
 
     const handleEnter = () => {
-        setTransitioning(true);
-        setTimeout(() => onEnter(), 1200);
+        if (started) {
+            return;
+        }
+
+        setStep(0);
+        setStarted(true);
     };
 
     return (
@@ -99,34 +127,31 @@ export default function CinematicIntro({
 
             <div className="relative z-10 w-full max-w-lg text-center">
                 <AnimatePresence mode="wait">
-                    {step < LINES.length ? (
+                    {started ? (
                         <motion.p
                             key={step}
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -15 }}
-                            transition={{ duration: 1 }}
+                            transition={{ duration: 1.4, ease: 'easeInOut' }}
                             className="font-heading text-lg leading-relaxed text-cream/90 italic md:text-xl"
                         >
-                            {LINES[step].text}
+                            {lines[step]}
                         </motion.p>
-                    ) : null}
-                </AnimatePresence>
-
-                {/* Title reveal */}
-                <AnimatePresence>
-                    {step >= LINES.length && (
+                    ) : (
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            key="welcome"
+                            initial={{ opacity: 0, scale: 0.96 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 1.2 }}
+                            exit={{ opacity: 0, y: -12 }}
+                            transition={{ duration: 1.1 }}
                             className="space-y-2"
                         >
                             <h1 className="text-gradient-pink font-heading text-4xl tracking-wide md:text-5xl">
-                                ONLY YOU × MY PEACE
+                                {settings?.intro_title || 'ONLY YOU × MY PEACE'}
                             </h1>
                             <p className="text-sm tracking-[0.4em] text-silver uppercase">
-                                Chapter Five
+                                {settings?.intro_subtitle || 'Chapter Five'}
                             </p>
                         </motion.div>
                     )}
@@ -134,11 +159,12 @@ export default function CinematicIntro({
 
                 {/* Enter button */}
                 <AnimatePresence>
-                    {showButton && (
+                    {!started && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.3 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            transition={{ duration: 0.8, delay: 0.8 }}
                             className="mt-12 space-y-4"
                         >
                             <button

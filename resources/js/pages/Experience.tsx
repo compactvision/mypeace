@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { experienceApi } from '@/api/experienceApi';
 import CinematicIntro from '@/components/experience/CinematicIntro';
 import FinalReveal from '@/components/experience/FinalReveal';
 import FiveMonthsTimeline from '@/components/experience/FiveMonthsTimeline';
@@ -14,53 +13,87 @@ import PrivateKitchen from '@/components/experience/PrivateKitchen';
 import RnbPlaylist from '@/components/experience/RnbPlaylist';
 import SocialFeed from '@/components/experience/SocialFeed';
 import SurpriseWheel from '@/components/experience/SurpriseWheel';
+import { useExperiencePreload } from '@/hooks/useExperiencePreload';
 import type { CoupleSettings, ExperienceCatalogue } from '@/types/experience';
 
-// No Chill – PARTYNEXTDOOR (YouTube audio-only embed)
-const NO_CHILL_YT_ID = 'UhqhRODWPMw';
+function createFallbackAmbience(): () => void {
+    const context = new AudioContext();
+    const master = context.createGain();
+    const filter = context.createBiquadFilter();
+    const oscillators = [110, 164.81, 220].map((frequency, index) => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = index === 0 ? 'sine' : 'triangle';
+        oscillator.frequency.value = frequency;
+        gain.gain.value = index === 0 ? 0.028 : 0.012;
+        oscillator.connect(gain);
+        gain.connect(filter);
+        oscillator.start();
 
-export default function Experience() {
+        return oscillator;
+    });
+
+    filter.type = 'lowpass';
+    filter.frequency.value = 720;
+    master.gain.value = 0.7;
+    filter.connect(master);
+    master.connect(context.destination);
+    void context.resume();
+
+    return () => {
+        oscillators.forEach((oscillator) => oscillator.stop());
+        void context.close();
+    };
+}
+
+type Props = {
+    catalogue: ExperienceCatalogue;
+};
+
+export default function Experience({ catalogue }: Props) {
     const [unlocked, setUnlocked] = useState(false);
     const [introSeen, setIntroSeen] = useState(false);
     const [section, setSection] = useState<string>('hub');
     const [foundKeys, setFoundKeys] = useState<string[]>([]);
     const [soundEnabled, setSoundEnabled] = useState(false);
-    const [settings, setSettings] = useState<CoupleSettings | null>(null);
-    const [content, setContent] = useState<ExperienceCatalogue>({});
-    const [loading, setLoading] = useState(true);
+    const settings: CoupleSettings | null = catalogue.settings?.[0] || null;
+    const content = catalogue;
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const stopFallbackRef = useRef<(() => void) | null>(null);
+
+    useExperiencePreload(catalogue);
 
     useEffect(() => {
-        experienceApi
-            .catalogue()
-            .then((catalogue) => {
-                setContent(catalogue);
-                setSettings(catalogue.settings?.[0] || null);
-            })
-            .catch(() => setContent({}))
-            .finally(() => setLoading(false));
+        return () => stopFallbackRef.current?.();
     }, []);
 
-    // Play / pause YouTube iframe based on soundEnabled
-    useEffect(() => {
-        if (!introSeen) {
+    const toggleSound = useCallback(() => {
+        if (soundEnabled) {
+            audioRef.current?.pause();
+            stopFallbackRef.current?.();
+            stopFallbackRef.current = null;
+            setSoundEnabled(false);
+
             return;
         }
 
-        const iframe = document.getElementById(
-            'bg-music-yt',
-        ) as HTMLIFrameElement | null;
+        const audio = audioRef.current;
 
-        if (!iframe) {
+        if (audio?.src) {
+            void audio
+                .play()
+                .then(() => setSoundEnabled(true))
+                .catch(() => {
+                    stopFallbackRef.current = createFallbackAmbience();
+                    setSoundEnabled(true);
+                });
+
             return;
         }
 
-        const msg = soundEnabled
-            ? '{"event":"command","func":"playVideo","args":""}'
-            : '{"event":"command","func":"pauseVideo","args":""}';
-        iframe.contentWindow?.postMessage(msg, '*');
-    }, [soundEnabled, introSeen]);
-
-    const toggleSound = () => setSoundEnabled((s) => !s);
+        stopFallbackRef.current = createFallbackAmbience();
+        setSoundEnabled(true);
+    }, [soundEnabled]);
     const addKey = (key: string) =>
         setFoundKeys((prev) => (prev.includes(key) ? prev : [...prev, key]));
     const goBack = () => setSection('hub');
@@ -76,29 +109,11 @@ export default function Experience() {
         content,
     };
 
-    if (loading) {
-        return (
-            <div className="water-bg flex min-h-screen items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-pink/30 border-t-pink" />
-            </div>
-        );
-    }
-
     if (!unlocked) {
         return (
             <LockScreen
                 settings={settings}
                 onUnlock={() => setUnlocked(true)}
-            />
-        );
-    }
-
-    if (!introSeen) {
-        return (
-            <CinematicIntro
-                onEnter={() => setIntroSeen(true)}
-                soundEnabled={soundEnabled}
-                onToggleSound={toggleSound}
             />
         );
     }
@@ -118,32 +133,33 @@ export default function Experience() {
 
     return (
         <>
-            {/* Hidden YouTube iframe for background music – No Chill · PARTYNEXTDOOR */}
-            <iframe
-                id="bg-music-yt"
-                title="background music"
-                style={{
-                    position: 'fixed',
-                    width: 0,
-                    height: 0,
-                    border: 'none',
-                    opacity: 0,
-                    pointerEvents: 'none',
-                }}
-                src={`https://www.youtube.com/embed/${NO_CHILL_YT_ID}?enablejsapi=1&autoplay=0&loop=1&playlist=${NO_CHILL_YT_ID}&controls=0`}
-                allow="autoplay"
+            <audio
+                ref={audioRef}
+                src={settings?.background_audio_url || undefined}
+                preload="metadata"
+                loop
+                playsInline
             />
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={section}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.4 }}
-                >
-                    {sections[section] || sections.hub}
-                </motion.div>
-            </AnimatePresence>
+            {!introSeen ? (
+                <CinematicIntro
+                    onEnter={() => setIntroSeen(true)}
+                    soundEnabled={soundEnabled}
+                    onToggleSound={toggleSound}
+                    settings={settings}
+                />
+            ) : (
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={section}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.4 }}
+                    >
+                        {sections[section] || sections.hub}
+                    </motion.div>
+                </AnimatePresence>
+            )}
         </>
     );
 }

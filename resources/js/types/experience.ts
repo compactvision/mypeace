@@ -6,6 +6,23 @@ export type CoupleSettings = {
     influencer_name: string;
     primary_message: string;
     access_code: string;
+    lock_title?: string;
+    lock_byline?: string;
+    special_date?: string;
+    intro_title?: string;
+    intro_subtitle?: string;
+    intro_lines?: string;
+    background_audio_url?: string;
+    timeline_title?: string;
+    timeline_subtitle?: string;
+    reasons_title?: string;
+    reasons_subtitle?: string;
+    gallery_title?: string;
+    gallery_subtitle?: string;
+    social_title?: string;
+    social_subtitle?: string;
+    playlist_title?: string;
+    playlist_subtitle?: string;
 };
 
 export type Memory = {
@@ -37,6 +54,14 @@ export type SocialPost = {
     photo_url?: string;
     jean_michel_thought?: string;
 };
+export type PlaylistTrack = {
+    id?: number;
+    title: string;
+    artist: string;
+    desc?: string;
+    external_url?: string;
+    featured?: boolean;
+};
 
 export type ExperienceCatalogue = {
     settings?: CoupleSettings[];
@@ -44,6 +69,7 @@ export type ExperienceCatalogue = {
     love_reasons?: LoveReason[];
     timeline?: TimelineEntry[];
     social_posts?: SocialPost[];
+    playlist?: PlaylistTrack[];
 };
 
 export type SectionProps = {

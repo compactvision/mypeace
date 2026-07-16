@@ -11,3 +11,5 @@ Route::prefix('experience')->middleware('throttle:60,1')->group(function (): voi
     Route::post('/responses/final-answer', [ExperienceResponseController::class, 'storeFinalAnswer'])
         ->name('api.experience.responses.final-answer');
 });
+
+Route::get('/countdown/config', [\App\Http\Controllers\CountdownController::class, 'getConfig'])->name('api.countdown.config');

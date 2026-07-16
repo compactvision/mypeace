@@ -110,14 +110,23 @@ export default function LockScreen({ settings, onUnlock }: Props) {
                 </div>
 
                 <h1 className="text-gradient-pink mb-1 font-heading text-2xl leading-snug">
-                    Created for My Peace
+                    {settings?.lock_title || 'Created for My Peace'}
                 </h1>
                 <p className="mb-4 font-handwriting text-2xl text-powder/80">
-                    By Only You
+                    {settings?.lock_byline || 'By Only You'}
                 </p>
 
                 <p className="mb-10 text-xs tracking-wider text-silver/40">
-                    21 juillet 2026
+                    {settings?.special_date
+                        ? new Date(settings.special_date).toLocaleDateString(
+                              'fr-FR',
+                              {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric',
+                              },
+                          )
+                        : '21 juillet 2026'}
                 </p>
 
                 {/* Code dots */}

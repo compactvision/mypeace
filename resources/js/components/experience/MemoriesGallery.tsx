@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { ImageOff, Info } from 'lucide-react';
 import React, { useState } from 'react';
+import ExperienceImage from '@/components/experience/ExperienceImage';
 import SectionLayout from '@/components/experience/SectionLayout';
 import type { Memory, SectionProps } from '@/types/experience';
 
@@ -22,6 +23,7 @@ export default function MemoriesGallery({
     content,
 }: SectionProps) {
     const memories: Memory[] = content?.memories || [];
+    const settings = content?.settings?.[0];
     const [activeCat, setActiveCat] = useState('all');
     const [behind, setBehind] = useState<Memory | null>(null);
 
@@ -33,8 +35,8 @@ export default function MemoriesGallery({
 
     return (
         <SectionLayout
-            title="Our Memories"
-            subtitle="Galerie privée"
+            title={settings?.gallery_title || 'Our Memories'}
+            subtitle={settings?.gallery_subtitle || 'Galerie privée'}
             onBack={onBack}
             soundEnabled={soundEnabled}
             onToggleSound={onToggleSound}
@@ -80,11 +82,11 @@ export default function MemoriesGallery({
                         >
                             <div className="glass overflow-hidden rounded-2xl">
                                 {mem.photo_url ? (
-                                    <img
+                                    <ExperienceImage
                                         src={mem.photo_url}
                                         alt={mem.title}
                                         className="w-full object-cover"
-                                        loading="lazy"
+                                        eager={i < 4}
                                     />
                                 ) : (
                                     <div className="flex h-40 flex-col items-center justify-center gap-1 bg-night-deep/50">

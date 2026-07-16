@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 class ExperienceContentService
 {
     /** @var list<string> */
-    public const TYPES = ['settings', 'memories', 'love_reasons', 'timeline', 'social_posts'];
+    public const TYPES = ['settings', 'memories', 'love_reasons', 'timeline', 'social_posts', 'playlist'];
 
     /** @return array<string, array<int, array<string, mixed>>> */
     public function catalogue(): array

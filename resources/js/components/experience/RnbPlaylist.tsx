@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Music, Disc3, ExternalLink } from 'lucide-react';
 import React from 'react';
 import SectionLayout from '@/components/experience/SectionLayout';
-import type { SectionProps } from '@/types/experience';
+import type { PlaylistTrack, SectionProps } from '@/types/experience';
 
 const TRACKS = [
     {
@@ -33,11 +33,17 @@ export default function RnbPlaylist({
     onBack,
     soundEnabled,
     onToggleSound,
+    content,
 }: SectionProps) {
+    const tracks: PlaylistTrack[] = content?.playlist?.length
+        ? content.playlist
+        : TRACKS;
+    const settings = content?.settings?.[0];
+
     return (
         <SectionLayout
-            title="Our Midnight Playlist"
-            subtitle="R&B · PARTYNEXTDOOR"
+            title={settings?.playlist_title || 'Our Midnight Playlist'}
+            subtitle={settings?.playlist_subtitle || 'R&B · PARTYNEXTDOOR'}
             onBack={onBack}
             soundEnabled={soundEnabled}
             onToggleSound={onToggleSound}
@@ -58,45 +64,62 @@ export default function RnbPlaylist({
 
             {/* Tracks */}
             <div className="space-y-3">
-                {TRACKS.map((track, i) => (
-                    <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -15 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: i * 0.1 }}
-                        className={`glass flex items-center gap-3 rounded-2xl p-4 ${track.featured ? 'glass-pink glow-pink' : ''}`}
-                    >
-                        <div
-                            className={`flex h-10 w-10 items-center justify-center rounded-xl ${track.featured ? 'bg-pink/20' : 'glass'}`}
+                {tracks.map((track, i) => {
+                    const card = (
+                        <motion.div
+                            key={track.id || i}
+                            initial={{ opacity: 0, x: -15 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.4, delay: i * 0.1 }}
+                            className={`glass flex items-center gap-3 rounded-2xl p-4 ${track.featured ? 'glass-pink glow-pink' : ''}`}
                         >
-                            <Music
-                                className={`h-4 w-4 ${track.featured ? 'text-pink' : 'text-silver/50'}`}
-                            />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                                <h3 className="truncate font-body text-sm text-cream">
-                                    {track.title}
-                                </h3>
-                                {track.featured && (
-                                    <span className="rounded-full bg-pink/20 px-1.5 py-0.5 text-[9px] text-powder">
-                                        Featured
-                                    </span>
-                                )}
+                            <div
+                                className={`flex h-10 w-10 items-center justify-center rounded-xl ${track.featured ? 'bg-pink/20' : 'glass'}`}
+                            >
+                                <Music
+                                    className={`h-4 w-4 ${track.featured ? 'text-pink' : 'text-silver/50'}`}
+                                />
                             </div>
-                            <p className="truncate text-xs text-silver/40">
-                                {track.desc}
-                            </p>
-                        </div>
-                        <ExternalLink className="h-4 w-4 flex-shrink-0 text-silver/30" />
-                    </motion.div>
-                ))}
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="truncate font-body text-sm text-cream">
+                                        {track.title}
+                                    </h3>
+                                    {track.featured && (
+                                        <span className="rounded-full bg-pink/20 px-1.5 py-0.5 text-[9px] text-powder">
+                                            Featured
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="truncate text-xs text-silver/40">
+                                    {track.desc}
+                                </p>
+                            </div>
+                            {track.external_url && (
+                                <ExternalLink className="h-4 w-4 flex-shrink-0 text-silver/30" />
+                            )}
+                        </motion.div>
+                    );
+
+                    return track.external_url ? (
+                        <a
+                            key={track.id || i}
+                            href={track.external_url}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            {card}
+                        </a>
+                    ) : (
+                        card
+                    );
+                })}
             </div>
 
             <p className="mt-6 text-center text-xs text-silver/30">
-                La musique ne se lance jamais automatiquement. Touche le bouton
-                son pour activer l'ambiance.
+                Touche le bouton son pour lancer ou couper la musique
+                d'ambiance.
             </p>
         </SectionLayout>
     );

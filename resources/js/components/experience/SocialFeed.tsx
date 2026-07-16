@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Sparkles, ImageOff, ChevronDown } from 'lucide-react';
 import React, { useState } from 'react';
+import ExperienceImage from '@/components/experience/ExperienceImage';
 import SectionLayout from '@/components/experience/SectionLayout';
 import type { SectionProps, SocialPost } from '@/types/experience';
 
@@ -51,12 +52,13 @@ export default function SocialFeed({
     const posts: SocialPost[] = content?.social_posts?.length
         ? content.social_posts
         : FALLBACK_POSTS;
+    const settings = content?.settings?.[0];
     const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
     return (
         <SectionLayout
-            title="arky N"
-            subtitle="Social Universe"
+            title={settings?.social_title || 'arky N'}
+            subtitle={settings?.social_subtitle || 'Social Universe'}
             onBack={onBack}
             soundEnabled={soundEnabled}
             onToggleSound={onToggleSound}
@@ -141,11 +143,11 @@ export default function SocialFeed({
 
                             {/* Photo */}
                             {post.photo_url ? (
-                                <img
+                                <ExperienceImage
                                     src={post.photo_url}
                                     alt=""
                                     className="h-64 w-full object-cover"
-                                    loading="lazy"
+                                    eager={i === 0}
                                 />
                             ) : (
                                 <div className="flex h-48 flex-col items-center justify-center gap-2 bg-night-deep/50">

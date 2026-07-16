@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { ImageOff } from 'lucide-react';
 import React from 'react';
+import ExperienceImage from '@/components/experience/ExperienceImage';
 import SectionLayout from '@/components/experience/SectionLayout';
 import type { SectionProps, TimelineEntry } from '@/types/experience';
 
@@ -61,11 +62,15 @@ export default function FiveMonthsTimeline({
     const entries: TimelineEntry[] = content?.timeline?.length
         ? content.timeline
         : FALLBACK_CHAPTERS;
+    const settings = content?.settings?.[0];
 
     return (
         <SectionLayout
-            title="Five Months, Five Chapters"
-            subtitle="Du 21 février au 21 juillet 2026"
+            title={settings?.timeline_title || 'Five Months, Five Chapters'}
+            subtitle={
+                settings?.timeline_subtitle ||
+                'Du 21 février au 21 juillet 2026'
+            }
             onBack={onBack}
             soundEnabled={soundEnabled}
             onToggleSound={onToggleSound}
@@ -104,11 +109,11 @@ export default function FiveMonthsTimeline({
                         {/* Photo */}
                         {entry.photo_url ? (
                             <div className="glass my-3 overflow-hidden rounded-2xl">
-                                <img
+                                <ExperienceImage
                                     src={entry.photo_url}
                                     alt={entry.title}
                                     className="h-48 w-full object-cover"
-                                    loading="lazy"
+                                    eager={i === 0}
                                 />
                             </div>
                         ) : (

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CountdownConfig;
 use App\Models\ExperienceContent;
 use App\Models\ExperienceResponse;
 use Inertia\Inertia;
@@ -32,7 +33,41 @@ class AdminController extends Controller
             ],
             'recentAnswers' => $this->responses('final_answer'),
             'recentDates' => $this->responses('next_date'),
+            'contents' => ExperienceContent::query()
+                ->orderBy('type')
+                ->orderBy('display_order')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (ExperienceContent $item): array => [
+                    'id' => $item->id,
+                    'type' => $item->type,
+                    'payload' => $item->payload,
+                    'display_order' => $item->display_order,
+                    'is_active' => $item->is_active,
+                ])
+                ->all(),
+            'countdown' => $this->countdown(),
         ]);
+    }
+
+    /** @return array<string, mixed>|null */
+    private function countdown(): ?array
+    {
+        $countdown = CountdownConfig::query()->first();
+
+        if (! $countdown) {
+            return null;
+        }
+
+        return [
+            ...$countdown->only([
+                'timezone', 'title', 'subtitle', 'main_message', 'alt_message',
+                'hidden_message', 'end_message', 'signature', 'post_expiration_text',
+                'graphics_quality', 'is_countdown_enabled', 'is_3d_scene_enabled',
+                'is_sound_enabled', 'manual_unlock',
+            ]),
+            'target_date' => $countdown->target_date?->format('Y-m-d\TH:i'),
+        ];
     }
 
     /** @return array<int, array<string, mixed>> */
