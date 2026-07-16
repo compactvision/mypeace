@@ -749,13 +749,21 @@ export default function AdminPanel({
             />
             <header className="sticky top-0 z-30 border-b border-border/70 bg-background/90 backdrop-blur-xl">
                 <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-                    <div>
-                        <h1 className="font-heading text-xl">
-                            My Peace Studio
-                        </h1>
-                        <p className="text-[11px] text-muted-foreground">
-                            Contrôle complet de l’expérience
-                        </p>
+                    <div className="flex items-center gap-3">
+                        <img
+                            src="/brand/my-peace-logo.png"
+                            alt=""
+                            className="size-11 object-contain"
+                            aria-hidden="true"
+                        />
+                        <div>
+                            <h1 className="font-heading text-xl">
+                                My Peace Studio
+                            </h1>
+                            <p className="text-[11px] text-muted-foreground">
+                                Contrôle complet de l’expérience
+                            </p>
+                        </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <Link

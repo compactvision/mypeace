@@ -20,9 +20,14 @@ export default function AuthLayout({
         <div className="flex min-h-screen items-center justify-center bg-background px-4">
             <div className="w-full max-w-md">
                 <div className="mb-10 text-center">
-                    <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
+                    <div className="relative mb-4 inline-flex h-20 w-20 items-center justify-center rounded-3xl border border-primary/20 bg-night-deep/80 shadow-[0_0_35px_rgba(236,72,153,0.16)]">
+                        <img
+                            src="/brand/my-peace-logo.png"
+                            alt="My Peace"
+                            className="h-16 w-16 object-contain"
+                        />
                         <Icon
-                            className="h-7 w-7 text-primary-foreground"
+                            className="absolute -right-1 -bottom-1 h-6 w-6 rounded-full bg-primary p-1.5 text-primary-foreground shadow-lg"
                             aria-hidden="true"
                         />
                     </div>
