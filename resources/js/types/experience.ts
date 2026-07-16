@@ -32,6 +32,7 @@ export type Memory = {
     memory_date?: string;
     location?: string;
     photo_url?: string;
+    video_url?: string;
     behind_story?: string;
 };
 

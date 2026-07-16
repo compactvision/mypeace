@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class AdminExperienceContentController extends Controller
 {
@@ -27,10 +28,15 @@ class AdminExperienceContentController extends Controller
             'is_active' => ['nullable', 'boolean'],
             'photo' => ['nullable', 'image', 'max:10240'],
             'audio' => ['nullable', 'file', 'mimetypes:audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg,audio/mp4,audio/x-m4a', 'max:12288'],
+            'video' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime', 'max:40960'],
+            'remove_video' => ['nullable', 'boolean'],
         ], [
             'audio.max' => 'La musique ne doit pas dépasser 12 Mo.',
             'audio.mimetypes' => 'Le fichier doit être une musique MP3, WAV, M4A ou OGG.',
             'audio.uploaded' => "La musique n'a pas pu être importée. Vérifiez que sa taille ne dépasse pas 12 Mo.",
+            'video.max' => 'La vidéo ne doit pas dépasser 40 Mo.',
+            'video.mimetypes' => 'La vidéo doit être au format MP4, WebM ou MOV.',
+            'video.uploaded' => "La vidéo n'a pas pu être importée. Vérifiez que sa taille ne dépasse pas 40 Mo.",
         ]);
 
         $type = $base['type'];
@@ -53,6 +59,28 @@ class AdminExperienceContentController extends Controller
         if ($request->hasFile('audio')) {
             $this->deleteManagedFile($payload['background_audio_url'] ?? null);
             $payload['background_audio_url'] = '/storage/'.$request->file('audio')->store('experience/audio', 'public');
+        }
+
+        if ($request->boolean('remove_video')) {
+            $this->deleteManagedFile($payload['video_url'] ?? null);
+            unset($payload['video_url']);
+        }
+
+        if ($request->hasFile('video')) {
+            $anotherVideoExists = ExperienceContent::query()
+                ->where('type', 'memories')
+                ->when($content, fn ($query) => $query->whereKeyNot($content->getKey()))
+                ->get()
+                ->contains(fn (ExperienceContent $memory): bool => filled($memory->payload['video_url'] ?? null));
+
+            if ($anotherVideoExists) {
+                throw ValidationException::withMessages([
+                    'video' => "Un souvenir vidéo existe déjà. Retirez d'abord sa vidéo pour utiliser cet emplacement ailleurs.",
+                ]);
+            }
+
+            $this->deleteManagedFile($payload['video_url'] ?? null);
+            $payload['video_url'] = '/storage/'.$request->file('video')->store('experience/videos', 'public');
         }
 
         $payload = collect($payload)
@@ -81,6 +109,7 @@ class AdminExperienceContentController extends Controller
     {
         $this->deleteManagedFile($content->payload['photo_url'] ?? null);
         $this->deleteManagedFile($content->payload['background_audio_url'] ?? null);
+        $this->deleteManagedFile($content->payload['video_url'] ?? null);
         $content->delete();
 
         return back()->with('status', 'Contenu supprimé.');
@@ -149,6 +178,7 @@ class AdminExperienceContentController extends Controller
                 'memory_date' => ['nullable', 'date'],
                 'location' => ['nullable', 'string', 'max:255'],
                 'photo_url' => ['nullable', 'string', 'max:2000'],
+                'video_url' => ['nullable', 'string', 'max:2000'],
                 'behind_story' => ['nullable', 'string', 'max:3000'],
             ],
             'love_reasons' => ['content' => ['required', 'string', 'max:1000']],

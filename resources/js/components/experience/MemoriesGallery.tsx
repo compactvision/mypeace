@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion';
-import { ImageOff, Info } from 'lucide-react';
-import React, { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Film, ImageOff, Info, MapPin, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import ExperienceImage from '@/components/experience/ExperienceImage';
 import SectionLayout from '@/components/experience/SectionLayout';
 import type { Memory, SectionProps } from '@/types/experience';
@@ -16,6 +16,20 @@ const CATEGORIES = [
     { id: 'secret', label: 'Secret' },
 ];
 
+const PHOTO_TILTS = [-1.8, 1.2, -0.7, 1.7, -1.1, 0.8];
+
+function formatMemoryDate(date?: string): string | null {
+    if (!date) {
+        return null;
+    }
+
+    return new Date(date).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
+}
+
 export default function MemoriesGallery({
     onBack,
     soundEnabled,
@@ -26,12 +40,62 @@ export default function MemoriesGallery({
     const settings = content?.settings?.[0];
     const [activeCat, setActiveCat] = useState('all');
     const [behind, setBehind] = useState<Memory | null>(null);
+    const [flipped, setFlipped] = useState(false);
+    const flipTimer = useRef<number | null>(null);
 
     const filtered = memories
         ? activeCat === 'all'
             ? memories
             : memories.filter((m) => m.category === activeCat)
         : [];
+    const videoMemory = filtered.find((memory) => memory.video_url);
+    const photoMemories = videoMemory
+        ? filtered.filter((memory) => memory !== videoMemory)
+        : filtered;
+    const showVideoSlot = activeCat === 'all' || Boolean(videoMemory);
+
+    useEffect(() => {
+        if (!behind) {
+            return;
+        }
+
+        const previousOverflow = document.body.style.overflow;
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setBehind(null);
+            }
+        };
+
+        document.body.style.overflow = 'hidden';
+        window.addEventListener('keydown', closeOnEscape);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener('keydown', closeOnEscape);
+
+            if (flipTimer.current) {
+                window.clearTimeout(flipTimer.current);
+            }
+        };
+    }, [behind]);
+
+    const openMemory = (memory: Memory) => {
+        if (flipTimer.current) {
+            window.clearTimeout(flipTimer.current);
+        }
+
+        setFlipped(false);
+        setBehind(memory);
+        flipTimer.current = window.setTimeout(() => setFlipped(true), 700);
+    };
+
+    const closeMemory = () => {
+        if (flipTimer.current) {
+            window.clearTimeout(flipTimer.current);
+        }
+
+        setBehind(null);
+    };
 
     return (
         <SectionLayout
@@ -59,7 +123,7 @@ export default function MemoriesGallery({
                 ))}
             </div>
 
-            {filtered.length === 0 ? (
+            {filtered.length === 0 && activeCat !== 'all' ? (
                 <div className="glass rounded-2xl p-8 text-center">
                     <ImageOff className="mx-auto mb-2 h-8 w-8 text-silver/20" />
                     <p className="text-sm text-silver/40">
@@ -70,94 +134,279 @@ export default function MemoriesGallery({
                     </p>
                 </div>
             ) : (
-                <div className="columns-2 gap-3 space-y-3">
-                    {filtered.map((mem, i) => (
-                        <motion.div
-                            key={mem.id || i}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true, margin: '-30px' }}
-                            transition={{ duration: 0.4, delay: i * 0.05 }}
-                            className="mb-3 break-inside-avoid"
+                <div>
+                    {showVideoSlot && (
+                        <motion.article
+                            initial={{ opacity: 0, y: 26, rotate: -1 }}
+                            animate={{ opacity: 1, y: 0, rotate: -0.4 }}
+                            transition={{ duration: 0.65 }}
+                            className="relative mb-10 rounded-[4px] bg-[#f5eee4] p-3 pb-5 shadow-[0_24px_50px_rgba(0,0,0,0.45)] sm:p-4 sm:pb-6"
                         >
-                            <div className="glass overflow-hidden rounded-2xl">
-                                {mem.photo_url ? (
-                                    <ExperienceImage
-                                        src={mem.photo_url}
-                                        alt={mem.title}
-                                        className="w-full object-cover"
-                                        eager={i < 4}
+                            <div className="overflow-hidden bg-night-black shadow-inner">
+                                {videoMemory?.video_url ? (
+                                    <video
+                                        src={videoMemory.video_url}
+                                        poster={videoMemory.photo_url}
+                                        controls
+                                        playsInline
+                                        preload="metadata"
+                                        className="aspect-video w-full object-cover"
                                     />
                                 ) : (
-                                    <div className="flex h-40 flex-col items-center justify-center gap-1 bg-night-deep/50">
-                                        <ImageOff className="h-5 w-5 text-silver/20" />
-                                        <span className="text-[10px] text-silver/20">
-                                            [PHOTO À AJOUTER]
-                                        </span>
+                                    <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-gradient-to-br from-night-deep via-night to-pink/15 px-6 text-center">
+                                        <div className="flex size-14 items-center justify-center rounded-full border border-pink/25 bg-pink/10 text-powder">
+                                            <Film className="size-6" />
+                                        </div>
+                                        <div>
+                                            <p className="font-heading text-lg text-cream">
+                                                Notre souvenir en mouvement
+                                            </p>
+                                            <p className="mt-1 text-xs text-silver/55">
+                                                Bientôt, un instant prendra vie
+                                                ici.
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
-                                <div className="p-3">
-                                    <p className="font-body text-sm text-cream">
+                            </div>
+                            <div className="px-2 pt-4 text-night-deep sm:px-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="font-handwriting text-xl font-semibold sm:text-2xl">
+                                            {videoMemory?.title ||
+                                                'Notre souvenir en vidéo'}
+                                        </p>
+                                        {videoMemory && (
+                                            <p className="mt-1 text-[10px] text-night/50">
+                                                {[
+                                                    formatMemoryDate(
+                                                        videoMemory.memory_date,
+                                                    ),
+                                                    videoMemory.location,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(' · ')}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <span className="rounded-full border border-night/10 px-2 py-1 text-[9px] font-semibold tracking-wider text-night/50 uppercase">
+                                        Vidéo
+                                    </span>
+                                </div>
+                                {videoMemory?.behind_story && (
+                                    <button
+                                        type="button"
+                                        onClick={() => openMemory(videoMemory)}
+                                        className="mt-3 flex items-center gap-1 text-[10px] font-semibold tracking-wide text-night/55 uppercase transition-colors hover:text-pink"
+                                    >
+                                        <Info className="size-3" />
+                                        Behind this memory
+                                    </button>
+                                )}
+                            </div>
+                        </motion.article>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-5 sm:gap-y-9">
+                        {photoMemories.map((mem, i) => (
+                            <motion.article
+                                key={mem.id || i}
+                                initial={{ opacity: 0, y: 24 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                whileHover={{
+                                    y: -6,
+                                    rotate: 0,
+                                    scale: 1.025,
+                                }}
+                                viewport={{ once: true, margin: '-30px' }}
+                                transition={{
+                                    duration: 0.5,
+                                    delay: i * 0.05,
+                                    ease: [0.22, 1, 0.36, 1],
+                                }}
+                                style={{
+                                    rotate: PHOTO_TILTS[i % PHOTO_TILTS.length],
+                                }}
+                                className="relative rounded-[3px] bg-[#f5eee4] p-2 pb-3 shadow-[0_18px_35px_rgba(0,0,0,0.35),0_2px_4px_rgba(0,0,0,0.25)] sm:p-3 sm:pb-4"
+                            >
+                                <div className="absolute inset-x-3 top-0 h-px bg-white/80" />
+                                <div className="overflow-hidden bg-[#d9d1c7] shadow-inner">
+                                    {mem.photo_url ? (
+                                        <ExperienceImage
+                                            src={mem.photo_url}
+                                            alt={mem.title}
+                                            className="aspect-[4/5] w-full object-cover"
+                                            eager={i < 4}
+                                        />
+                                    ) : (
+                                        <div className="flex aspect-[4/5] flex-col items-center justify-center gap-1 bg-[#d9d1c7]">
+                                            <ImageOff className="h-5 w-5 text-night/25" />
+                                            <span className="text-[10px] text-night/30">
+                                                [PHOTO À AJOUTER]
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="px-1 pt-3 text-night-deep sm:px-2 sm:pt-4">
+                                    <p className="font-handwriting text-base leading-none font-semibold sm:text-xl">
                                         {mem.title}
                                     </p>
-                                    {mem.memory_date && (
-                                        <p className="mt-0.5 text-[10px] text-silver/40">
-                                            {new Date(
-                                                mem.memory_date,
-                                            ).toLocaleDateString('fr-FR', {
-                                                day: 'numeric',
-                                                month: 'short',
-                                                year: 'numeric',
-                                            })}
-                                        </p>
-                                    )}
-                                    {mem.location && (
-                                        <p className="text-[10px] text-silver/40">
-                                            {mem.location}
-                                        </p>
-                                    )}
+                                    <div className="mt-1.5 min-h-7 text-[9px] leading-relaxed text-night/55 sm:text-[10px]">
+                                        {formatMemoryDate(mem.memory_date) && (
+                                            <p>
+                                                {formatMemoryDate(
+                                                    mem.memory_date,
+                                                )}
+                                            </p>
+                                        )}
+                                        {mem.location && (
+                                            <p className="flex items-center gap-1 truncate">
+                                                <MapPin className="size-2.5 shrink-0" />
+                                                {mem.location}
+                                            </p>
+                                        )}
+                                    </div>
                                     {mem.behind_story && (
                                         <button
-                                            onClick={() => setBehind(mem)}
-                                            className="mt-2 flex items-center gap-1 text-[11px] text-powder/60 transition-colors hover:text-powder"
+                                            type="button"
+                                            onClick={() => openMemory(mem)}
+                                            className="mt-2 flex w-full items-center justify-center gap-1 border-t border-night/10 pt-2 text-[9px] font-semibold tracking-wide text-night/60 uppercase transition-colors hover:text-pink sm:text-[10px]"
                                         >
-                                            <Info className="h-3 w-3" />
+                                            <Info className="size-3" />
                                             Behind this memory
                                         </button>
                                     )}
                                 </div>
-                            </div>
-                        </motion.div>
-                    ))}
+                            </motion.article>
+                        ))}
+                    </div>
                 </div>
             )}
 
-            {/* Behind story modal */}
-            {behind && (
-                <div
-                    onClick={() => setBehind(null)}
-                    className="fixed inset-0 z-50 flex items-end justify-center bg-night-black/80 p-4 backdrop-blur-sm"
-                >
+            <AnimatePresence>
+                {behind && (
                     <motion.div
-                        initial={{ y: 50, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        className="glass-pink w-full max-w-sm rounded-3xl p-6"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={`Histoire du souvenir ${behind.title}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.35 }}
+                        onMouseDown={(event) => {
+                            if (event.target === event.currentTarget) {
+                                closeMemory();
+                            }
+                        }}
+                        className="fixed inset-0 z-[70] flex items-center justify-center overflow-hidden bg-night-black/90 p-4 backdrop-blur-xl [perspective:1600px]"
                     >
-                        <h3 className="mb-2 font-heading text-lg text-cream">
-                            {behind.title}
-                        </h3>
-                        <p className="font-handwriting text-lg leading-snug text-powder/80">
-                            {behind.behind_story}
-                        </p>
-                        <button
-                            onClick={() => setBehind(null)}
-                            className="glass mt-4 w-full rounded-xl py-2.5 text-sm text-silver transition-colors hover:text-cream"
+                        <motion.div
+                            initial={{
+                                opacity: 0,
+                                scale: 0.55,
+                                y: 80,
+                                rotate: -7,
+                            }}
+                            animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
+                            exit={{ opacity: 0, scale: 0.7, y: 40 }}
+                            transition={{
+                                type: 'spring',
+                                stiffness: 150,
+                                damping: 20,
+                            }}
+                            className="relative h-[min(72vh,620px)] w-[min(88vw,430px)]"
                         >
-                            Fermer
+                            <motion.div
+                                animate={{ rotateY: flipped ? 180 : 0 }}
+                                transition={{
+                                    duration: 1.15,
+                                    ease: [0.65, 0, 0.35, 1],
+                                }}
+                                className="relative h-full w-full [transform-style:preserve-3d]"
+                            >
+                                <div className="absolute inset-0 flex flex-col rounded-[5px] bg-[#f5eee4] p-3 pb-5 shadow-[0_35px_90px_rgba(0,0,0,0.65)] [backface-visibility:hidden] sm:p-4 sm:pb-6">
+                                    <div className="min-h-0 flex-1 overflow-hidden bg-[#d9d1c7] [&>div]:h-full">
+                                        {behind.photo_url ? (
+                                            <ExperienceImage
+                                                src={behind.photo_url}
+                                                alt={behind.title}
+                                                className="h-full w-full object-cover"
+                                                eager
+                                            />
+                                        ) : (
+                                            <div className="flex h-full flex-col items-center justify-center gap-2 text-night/30">
+                                                <ImageOff className="size-8" />
+                                                <span className="text-xs">
+                                                    Photo à ajouter
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="px-2 pt-4 text-night-deep">
+                                        <p className="font-handwriting text-2xl font-semibold">
+                                            {behind.title}
+                                        </p>
+                                        <p className="mt-1 text-[11px] text-night/50">
+                                            {[
+                                                formatMemoryDate(
+                                                    behind.memory_date,
+                                                ),
+                                                behind.location,
+                                            ]
+                                                .filter(Boolean)
+                                                .join(' · ')}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="absolute inset-0 flex [transform:rotateY(180deg)] flex-col overflow-hidden rounded-[5px] bg-[#f5eee4] p-7 text-night-deep shadow-[0_35px_90px_rgba(0,0,0,0.65)] [backface-visibility:hidden] sm:p-10">
+                                    <div className="absolute top-5 right-5 text-5xl text-pink/15">
+                                        ♥
+                                    </div>
+                                    <p className="text-[10px] font-semibold tracking-[0.28em] text-pink uppercase">
+                                        Behind this memory
+                                    </p>
+                                    <h3 className="mt-4 font-heading text-3xl leading-tight">
+                                        {behind.title}
+                                    </h3>
+                                    <div className="my-5 h-px w-16 bg-pink/35" />
+                                    <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                                        <p className="font-handwriting text-xl leading-relaxed text-night/80 sm:text-2xl">
+                                            {behind.behind_story}
+                                        </p>
+                                    </div>
+                                    <div className="mt-5 flex items-center justify-between border-t border-night/10 pt-4 text-[10px] text-night/45">
+                                        <span>
+                                            {formatMemoryDate(
+                                                behind.memory_date,
+                                            )}
+                                        </span>
+                                        <span className="font-handwriting text-base text-pink/70">
+                                            My Peace ♥
+                                        </span>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                        <button
+                            type="button"
+                            onClick={closeMemory}
+                            className="glass absolute top-4 right-4 z-10 flex size-11 items-center justify-center rounded-full text-cream transition hover:scale-105 hover:text-powder"
+                            aria-label="Fermer le souvenir"
+                        >
+                            <X className="size-5" />
                         </button>
+                        <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 1.8 }}
+                            className="pointer-events-none absolute bottom-5 left-1/2 -translate-x-1/2 text-center text-[10px] tracking-[0.18em] text-silver/45 uppercase"
+                        >
+                            Appuie en dehors pour fermer
+                        </motion.p>
                     </motion.div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
         </SectionLayout>
     );
 }

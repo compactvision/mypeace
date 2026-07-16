@@ -14,6 +14,7 @@ import {
     Sparkles,
     Trash2,
     Upload,
+    Video,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -289,6 +290,9 @@ function ContentForm({
     const [audioSelectionError, setAudioSelectionError] = useState<
         string | null
     >(null);
+    const [videoSelectionError, setVideoSelectionError] = useState<
+        string | null
+    >(null);
     const form = useForm<
         Record<string, string | number | boolean | File | null>
     >({
@@ -299,13 +303,17 @@ function ContentForm({
         is_active: item?.is_active ?? true,
         photo: null,
         audio: null,
+        video: null,
+        remove_video: false,
     });
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
 
-        if (audioSelectionError) {
-            toast.error(audioSelectionError);
+        const selectionError = audioSelectionError || videoSelectionError;
+
+        if (selectionError) {
+            toast.error(selectionError);
 
             return;
         }
@@ -314,7 +322,7 @@ function ContentForm({
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
-                form.reset('photo', 'audio');
+                form.reset('photo', 'audio', 'video', 'remove_video');
                 onCancel?.();
             },
         });
@@ -322,6 +330,7 @@ function ContentForm({
 
     const photoUrl = String(form.data.photo_url || '');
     const audioUrl = String(form.data.background_audio_url || '');
+    const videoUrl = String(form.data.video_url || '');
 
     return (
         <form
@@ -441,6 +450,84 @@ function ContentForm({
                     {audioSelectionError && (
                         <p className="text-xs text-destructive">
                             {audioSelectionError}
+                        </p>
+                    )}
+                </div>
+            )}
+
+            {type === 'memories' && (
+                <div className="space-y-3 rounded-xl border border-pink/20 bg-pink/5 p-3">
+                    <div>
+                        <p className="flex items-center gap-2 text-xs font-medium text-powder">
+                            <Video className="size-4" /> Souvenir vidéo unique
+                        </p>
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                            Une seule vidéo peut être affichée dans toute la
+                            galerie.
+                        </p>
+                    </div>
+                    {videoUrl && !form.data.remove_video && (
+                        <video
+                            src={videoUrl}
+                            controls
+                            playsInline
+                            preload="metadata"
+                            className="max-h-56 w-full rounded-xl bg-night-black object-contain"
+                        />
+                    )}
+                    <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-primary/30 px-4 py-3 text-xs text-primary hover:bg-primary/10">
+                        <Upload className="size-4" />
+                        {form.data.video instanceof File
+                            ? form.data.video.name
+                            : 'Importer MP4, WebM ou MOV (40 Mo max.)'}
+                        <input
+                            type="file"
+                            accept="video/mp4,video/webm,video/quicktime"
+                            className="hidden"
+                            onChange={(event) => {
+                                const file = event.target.files?.[0] || null;
+
+                                if (file && file.size > 40 * 1024 * 1024) {
+                                    const message =
+                                        'La vidéo ne doit pas dépasser 40 Mo.';
+                                    setVideoSelectionError(message);
+                                    toast.error(message);
+                                    form.setData('video', null);
+                                    event.target.value = '';
+
+                                    return;
+                                }
+
+                                setVideoSelectionError(null);
+                                form.clearErrors('video');
+                                form.setData('remove_video', false);
+                                form.setData('video', file);
+                            }}
+                        />
+                    </label>
+                    {videoUrl && (
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <input
+                                type="checkbox"
+                                checked={Boolean(form.data.remove_video)}
+                                onChange={(event) => {
+                                    form.setData(
+                                        'remove_video',
+                                        event.target.checked,
+                                    );
+
+                                    if (event.target.checked) {
+                                        form.setData('video', null);
+                                    }
+                                }}
+                                className="size-4 accent-pink"
+                            />
+                            Retirer cette vidéo à l’enregistrement
+                        </label>
+                    )}
+                    {videoSelectionError && (
+                        <p className="text-xs text-destructive">
+                            {videoSelectionError}
                         </p>
                     )}
                 </div>

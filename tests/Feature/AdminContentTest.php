@@ -85,6 +85,56 @@ class AdminContentTest extends TestCase
         Storage::disk('public')->assertDirectoryEmpty('experience/audio');
     }
 
+    public function test_admin_can_add_one_video_memory(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create())
+            ->post('/admin/content', [
+                'type' => 'memories',
+                'title' => 'Notre instant en mouvement',
+                'category' => 'fleuve',
+                'behind_story' => 'Un instant que les photos seules ne pouvaient pas raconter.',
+                'is_active' => true,
+                'video' => UploadedFile::fake()->create('memory.mp4', 2048, 'video/mp4'),
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $memory = ExperienceContent::query()->where('type', 'memories')->firstOrFail();
+
+        $this->assertStringStartsWith('/storage/experience/videos/', $memory->payload['video_url']);
+        Storage::disk('public')->assertExists(str_replace('/storage/', '', $memory->payload['video_url']));
+    }
+
+    public function test_admin_cannot_create_a_second_video_memory(): void
+    {
+        Storage::fake('public');
+        ExperienceContent::query()->create([
+            'type' => 'memories',
+            'payload' => [
+                'title' => 'Première vidéo',
+                'category' => 'fleuve',
+                'video_url' => '/storage/experience/videos/first.mp4',
+            ],
+            'display_order' => 1,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->post('/admin/content', [
+                'type' => 'memories',
+                'title' => 'Deuxième vidéo',
+                'category' => 'sorties',
+                'is_active' => true,
+                'video' => UploadedFile::fake()->create('second.mp4', 2048, 'video/mp4'),
+            ])
+            ->assertSessionHasErrors('video');
+
+        $this->assertDatabaseCount('experience_contents', 1);
+        Storage::disk('public')->assertMissing('experience/videos/second.mp4');
+    }
+
     public function test_content_management_routes_require_authentication(): void
     {
         $this->post('/admin/content')->assertRedirect('/login');
