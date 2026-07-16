@@ -56,6 +56,7 @@ class CountdownController extends Controller
                 'hidden_message' => $configModel->hidden_message,
                 'end_message' => $configModel->end_message,
                 'signature' => $configModel->signature,
+                'audio_url' => $configModel->audio_url,
                 'is_countdown_enabled' => $configModel->is_countdown_enabled,
                 'is_3d_scene_enabled' => $configModel->is_3d_scene_enabled,
                 'is_sound_enabled' => $configModel->is_sound_enabled,

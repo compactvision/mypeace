@@ -63,7 +63,7 @@ class AdminController extends Controller
             ...$countdown->only([
                 'timezone', 'title', 'subtitle', 'main_message', 'alt_message',
                 'hidden_message', 'end_message', 'signature', 'post_expiration_text',
-                'graphics_quality', 'is_countdown_enabled', 'is_3d_scene_enabled',
+                'audio_url', 'graphics_quality', 'is_countdown_enabled', 'is_3d_scene_enabled',
                 'is_sound_enabled', 'manual_unlock',
             ]),
             'target_date' => $countdown->target_date?->format('Y-m-d\TH:i'),

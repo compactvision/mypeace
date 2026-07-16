@@ -29,6 +29,6 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/admin/content/{content}/profile-photo', [AdminExperienceContentController::class, 'storeProfilePhoto'])->name('admin.content.profile-photo.store');
     Route::delete('/admin/content/{content}', [AdminExperienceContentController::class, 'destroy'])->name('admin.content.destroy');
     Route::delete('/admin/content/{content}/media/{media}', [AdminExperienceContentController::class, 'destroyMedia'])->name('admin.content.media.destroy');
-    Route::put('/admin/countdown', [AdminExperienceContentController::class, 'updateCountdown'])->name('admin.countdown.update');
+    Route::post('/admin/countdown', [AdminExperienceContentController::class, 'updateCountdown'])->name('admin.countdown.update');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });

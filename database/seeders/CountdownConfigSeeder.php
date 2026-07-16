@@ -24,7 +24,7 @@ class CountdownConfigSeeder extends Seeder
             'signature' => 'From Only You.',
             'is_countdown_enabled' => true,
             'is_3d_scene_enabled' => true,
-            'is_sound_enabled' => false,
+            'is_sound_enabled' => true,
             'graphics_quality' => 'high',
             'manual_unlock' => false,
             'post_expiration_text' => 'Chapter Five is unlocked.',

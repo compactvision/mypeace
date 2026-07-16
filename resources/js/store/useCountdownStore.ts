@@ -10,6 +10,7 @@ export interface CountdownConfig {
     hidden_message: string;
     end_message: string;
     signature: string;
+    audio_url: string | null;
     is_countdown_enabled: boolean;
     is_3d_scene_enabled: boolean;
     is_sound_enabled: boolean;

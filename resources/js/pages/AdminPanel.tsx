@@ -51,7 +51,7 @@ type AdminContent = {
     display_order: number;
     is_active: boolean;
 };
-type CountdownConfig = Record<string, string | boolean>;
+type CountdownConfig = Record<string, string | boolean | null>;
 type Props = {
     stats: Stats;
     recentAnswers: FinalAnswer[];
@@ -379,8 +379,22 @@ function ContentForm({
         form.post(`/admin/content${item ? `/${item.id}` : ''}`, {
             forceFormData: true,
             preserveScroll: true,
-            onSuccess: () => {
+            onSuccess: (page) => {
                 form.reset('photo', 'audio', 'video', 'remove_video');
+
+                if (type === 'settings') {
+                    const updatedSettings = (
+                        page.props as unknown as Props
+                    ).contents.find((content) => content.type === 'settings');
+
+                    form.setData(
+                        'background_audio_url',
+                        String(
+                            updatedSettings?.payload.background_audio_url || '',
+                        ),
+                    );
+                }
+
                 onCancel?.();
             },
         });
@@ -393,19 +407,30 @@ function ContentForm({
     const videoUrl = String(form.data.video_url || '');
     const selectedPhoto =
         form.data.photo instanceof File ? form.data.photo : null;
+    const selectedAudio =
+        form.data.audio instanceof File ? form.data.audio : null;
     const selectedPhotoUrl = useMemo(
         () => (selectedPhoto ? URL.createObjectURL(selectedPhoto) : null),
         [selectedPhoto],
     );
     const photoPreviewUrl = selectedPhotoUrl || photoUrl;
+    const selectedAudioUrl = useMemo(
+        () => (selectedAudio ? URL.createObjectURL(selectedAudio) : null),
+        [selectedAudio],
+    );
+    const audioPreviewUrl = selectedAudioUrl || audioUrl;
 
     useEffect(() => {
         return () => {
             if (selectedPhotoUrl) {
                 URL.revokeObjectURL(selectedPhotoUrl);
             }
+
+            if (selectedAudioUrl) {
+                URL.revokeObjectURL(selectedAudioUrl);
+            }
         };
-    }, [selectedPhotoUrl]);
+    }, [selectedAudioUrl, selectedPhotoUrl]);
 
     return (
         <form
@@ -556,12 +581,18 @@ function ContentForm({
             {type === 'settings' && (
                 <div className="space-y-2 rounded-xl border border-primary/15 bg-primary/5 p-3">
                     <p className="text-xs font-medium text-powder">
-                        Musique de fond
+                        Musique de fond du site
                     </p>
-                    {audioUrl && (
+                    <p className="text-[11px] text-muted-foreground">
+                        Choisissez le morceau et écoutez l’aperçu avant
+                        d’enregistrer.
+                    </p>
+                    {audioPreviewUrl && (
                         <audio
-                            src={audioUrl}
+                            key={audioPreviewUrl}
+                            src={audioPreviewUrl}
                             controls
+                            preload="metadata"
                             className="h-10 w-full"
                         />
                     )}
@@ -779,8 +810,31 @@ function ContentForm({
     );
 }
 
+type CountdownFormData = {
+    target_date: string;
+    timezone: string;
+    title: string;
+    subtitle: string;
+    main_message: string;
+    alt_message: string;
+    hidden_message: string;
+    end_message: string;
+    signature: string;
+    post_expiration_text: string;
+    audio_url: string;
+    countdown_audio: File | null;
+    graphics_quality: string;
+    is_countdown_enabled: boolean;
+    is_3d_scene_enabled: boolean;
+    is_sound_enabled: boolean;
+    manual_unlock: boolean;
+};
+
 function CountdownForm({ countdown }: { countdown: CountdownConfig | null }) {
-    const form = useForm({
+    const [audioSelectionError, setAudioSelectionError] = useState<
+        string | null
+    >(null);
+    const form = useForm<CountdownFormData>({
         target_date: String(countdown?.target_date || ''),
         timezone: String(countdown?.timezone || 'Africa/Kinshasa'),
         title: String(countdown?.title || ''),
@@ -791,12 +845,30 @@ function CountdownForm({ countdown }: { countdown: CountdownConfig | null }) {
         end_message: String(countdown?.end_message || ''),
         signature: String(countdown?.signature || ''),
         post_expiration_text: String(countdown?.post_expiration_text || ''),
+        audio_url: String(countdown?.audio_url || ''),
+        countdown_audio: null,
         graphics_quality: String(countdown?.graphics_quality || 'high'),
         is_countdown_enabled: Boolean(countdown?.is_countdown_enabled ?? true),
         is_3d_scene_enabled: Boolean(countdown?.is_3d_scene_enabled ?? true),
-        is_sound_enabled: Boolean(countdown?.is_sound_enabled ?? false),
+        is_sound_enabled: Boolean(countdown?.is_sound_enabled ?? true),
         manual_unlock: Boolean(countdown?.manual_unlock ?? false),
     });
+    const selectedAudioUrl = useMemo(
+        () =>
+            form.data.countdown_audio
+                ? URL.createObjectURL(form.data.countdown_audio)
+                : null,
+        [form.data.countdown_audio],
+    );
+    const audioPreviewUrl = selectedAudioUrl || form.data.audio_url;
+
+    useEffect(() => {
+        return () => {
+            if (selectedAudioUrl) {
+                URL.revokeObjectURL(selectedAudioUrl);
+            }
+        };
+    }, [selectedAudioUrl]);
 
     const textFields: FieldDefinition[] = [
         {
@@ -823,8 +895,20 @@ function CountdownForm({ countdown }: { countdown: CountdownConfig | null }) {
         <form
             onSubmit={(event) => {
                 event.preventDefault();
-                form.put('/admin/countdown', {
+                form.post('/admin/countdown', {
+                    forceFormData: true,
                     preserveScroll: true,
+                    onSuccess: (page) => {
+                        const updatedCountdown = (
+                            page.props as unknown as Props
+                        ).countdown;
+
+                        form.reset('countdown_audio');
+                        form.setData(
+                            'audio_url',
+                            String(updatedCountdown?.audio_url || ''),
+                        );
+                    },
                 });
             }}
             className="glass space-y-5 rounded-2xl p-4 sm:p-6"
@@ -871,6 +955,61 @@ function CountdownForm({ countdown }: { countdown: CountdownConfig | null }) {
                         <option value="high">Haute</option>
                     </select>
                 </label>
+            </div>
+            <div className="space-y-3 rounded-xl border border-primary/15 bg-primary/5 p-4">
+                <div>
+                    <p className="flex items-center gap-2 text-xs font-medium text-powder">
+                        <Music2 className="size-4" /> Musique du compte à
+                        rebours
+                    </p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                        Choisissez le morceau, écoutez l’aperçu, puis
+                        enregistrez.
+                    </p>
+                </div>
+                {audioPreviewUrl && (
+                    <audio
+                        key={audioPreviewUrl}
+                        src={audioPreviewUrl}
+                        controls
+                        preload="metadata"
+                        className="h-10 w-full"
+                    />
+                )}
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-primary/30 px-4 py-3 text-xs text-primary hover:bg-primary/10">
+                    <Upload className="size-4" />
+                    {form.data.countdown_audio
+                        ? form.data.countdown_audio.name
+                        : 'Importer MP3, WAV, M4A ou OGG (12 Mo max.)'}
+                    <input
+                        type="file"
+                        accept="audio/*"
+                        className="hidden"
+                        onChange={(event) => {
+                            const file = event.target.files?.[0] || null;
+
+                            if (file && file.size > 12 * 1024 * 1024) {
+                                const message =
+                                    'La musique du compte à rebours ne doit pas dépasser 12 Mo.';
+                                setAudioSelectionError(message);
+                                toast.error(message);
+                                form.setData('countdown_audio', null);
+                                event.target.value = '';
+
+                                return;
+                            }
+
+                            setAudioSelectionError(null);
+                            form.clearErrors('countdown_audio');
+                            form.setData('countdown_audio', file);
+                        }}
+                    />
+                </label>
+                {audioSelectionError && (
+                    <p className="text-xs text-destructive">
+                        {audioSelectionError}
+                    </p>
+                )}
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
                 {[

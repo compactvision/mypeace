@@ -19,6 +19,7 @@ class CountdownConfig extends Model
         'hidden_message',
         'end_message',
         'signature',
+        'audio_url',
         'is_countdown_enabled',
         'is_3d_scene_enabled',
         'is_sound_enabled',

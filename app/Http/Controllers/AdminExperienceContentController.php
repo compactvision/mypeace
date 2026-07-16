@@ -179,19 +179,34 @@ class AdminExperienceContentController extends Controller
             'hidden_message' => ['nullable', 'string', 'max:500'],
             'end_message' => ['nullable', 'string', 'max:500'],
             'signature' => ['nullable', 'string', 'max:255'],
+            'audio_url' => ['nullable', 'string', 'max:2000'],
+            'countdown_audio' => ['nullable', 'file', 'mimetypes:audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg,audio/mp4,audio/x-m4a', 'max:12288'],
             'post_expiration_text' => ['nullable', 'string', 'max:500'],
             'graphics_quality' => ['required', Rule::in(['low', 'medium', 'high'])],
             'is_countdown_enabled' => ['nullable', 'boolean'],
             'is_3d_scene_enabled' => ['nullable', 'boolean'],
             'is_sound_enabled' => ['nullable', 'boolean'],
             'manual_unlock' => ['nullable', 'boolean'],
+        ], [
+            'countdown_audio.max' => 'La musique du compte à rebours ne doit pas dépasser 12 Mo.',
+            'countdown_audio.mimetypes' => 'La musique du compte à rebours doit être au format MP3, WAV, M4A ou OGG.',
+            'countdown_audio.uploaded' => "La musique du compte à rebours n'a pas pu être importée. Vérifiez que sa taille ne dépasse pas 12 Mo.",
         ]);
+
+        unset($validated['countdown_audio']);
+
+        $countdown = CountdownConfig::query()->first();
+
+        if ($request->hasFile('countdown_audio')) {
+            $this->deleteManagedFile($countdown?->audio_url);
+            $validated['audio_url'] = '/storage/'.$request->file('countdown_audio')->store('experience/audio', 'public');
+        }
 
         foreach (['is_countdown_enabled', 'is_3d_scene_enabled', 'is_sound_enabled', 'manual_unlock'] as $field) {
             $validated[$field] = $request->boolean($field);
         }
 
-        CountdownConfig::query()->updateOrCreate(['id' => CountdownConfig::query()->value('id')], $validated);
+        CountdownConfig::query()->updateOrCreate(['id' => $countdown?->id], $validated);
         Cache::forget('countdown_config_public');
 
         return back()->with('status', 'Compte à rebours mis à jour.');

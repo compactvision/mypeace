@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CountdownConfig;
 use App\Models\ExperienceContent;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -66,6 +67,46 @@ class AdminContentTest extends TestCase
         $settings->refresh();
         $this->assertStringStartsWith('/storage/experience/audio/', $settings->payload['background_audio_url']);
         Storage::disk('public')->assertExists(str_replace('/storage/', '', $settings->payload['background_audio_url']));
+    }
+
+    public function test_admin_can_upload_a_separate_countdown_music_file(): void
+    {
+        Storage::fake('public');
+        $countdown = CountdownConfig::query()->create([
+            'target_date' => '2026-07-21 00:00:00',
+            'timezone' => 'Africa/Kinshasa',
+            'graphics_quality' => 'high',
+            'is_countdown_enabled' => true,
+            'is_3d_scene_enabled' => true,
+            'is_sound_enabled' => true,
+            'manual_unlock' => false,
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->post('/admin/countdown', [
+                'target_date' => '2026-07-21 00:00:00',
+                'timezone' => 'Africa/Kinshasa',
+                'graphics_quality' => 'high',
+                'is_countdown_enabled' => true,
+                'is_3d_scene_enabled' => true,
+                'is_sound_enabled' => true,
+                'manual_unlock' => false,
+                'countdown_audio' => UploadedFile::fake()->create(
+                    'dames-interlude.mp3',
+                    800,
+                    'audio/mpeg',
+                ),
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $countdown->refresh();
+
+        $this->assertStringStartsWith('/storage/experience/audio/', $countdown->audio_url);
+        Storage::disk('public')->assertExists(str_replace('/storage/', '', $countdown->audio_url));
+        $this->getJson('/api/countdown/config')
+            ->assertOk()
+            ->assertJsonPath('config.audio_url', $countdown->audio_url);
     }
 
     public function test_admin_can_upload_and_delete_the_profile_photo(): void
@@ -254,6 +295,6 @@ class AdminContentTest extends TestCase
         $this->post('/admin/content')->assertRedirect('/login');
         $this->post('/admin/content/1/profile-photo')->assertRedirect('/login');
         $this->delete('/admin/content/1/media/photo')->assertRedirect('/login');
-        $this->put('/admin/countdown')->assertRedirect('/login');
+        $this->post('/admin/countdown')->assertRedirect('/login');
     }
 }

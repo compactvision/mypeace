@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { AudioLines, Sparkles, VolumeX } from 'lucide-react';
 import { useCountdown } from '../../../hooks/useCountdown';
 import { useCountdownStore } from '../../../store/useCountdownStore';
+import { pauseCountdownMusic, playCountdownMusic } from './SoundController';
 
 export function CountdownOverlay() {
     const {
@@ -16,6 +17,29 @@ export function CountdownOverlay() {
     } = useCountdownStore();
 
     const { isCompleted } = useCountdown();
+
+    const toggleMusic = () => {
+        if (isSoundEnabled) {
+            pauseCountdownMusic();
+            setSoundEnabled(false);
+
+            return;
+        }
+
+        if (!config?.audio_url) {
+            return;
+        }
+
+        void playCountdownMusic(config.audio_url)
+            .then(() => setSoundEnabled(true))
+            .catch((error: unknown) => {
+                console.error(
+                    'Impossible de lire la musique du compte à rebours',
+                    error,
+                );
+                setSoundEnabled(false);
+            });
+    };
 
     if (!config || isRevealed) {
         return null;
@@ -64,20 +88,20 @@ export function CountdownOverlay() {
                         </span>
                     </button>
 
-                    {config.is_sound_enabled && (
+                    {config.is_sound_enabled && config.audio_url && (
                         <button
                             type="button"
                             aria-label={
                                 isSoundEnabled
-                                    ? "Couper le son d'ambiance"
-                                    : "Activer le son d'ambiance"
+                                    ? 'Mettre la musique en pause'
+                                    : 'Écouter la musique du compte à rebours'
                             }
                             title={
                                 isSoundEnabled
-                                    ? "Couper le son d'ambiance"
-                                    : "Activer le son d'ambiance"
+                                    ? 'Mettre la musique en pause'
+                                    : 'Écouter la musique du compte à rebours'
                             }
-                            onClick={() => setSoundEnabled(!isSoundEnabled)}
+                            onClick={toggleMusic}
                             className="flex h-11 min-w-11 items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.055] px-3 text-white/65 shadow-[0_8px_30px_rgba(0,0,0,0.25)] backdrop-blur-xl transition-all hover:border-[#7eb3ff]/45 hover:bg-white/10 hover:text-white active:scale-95 sm:px-4"
                         >
                             {isSoundEnabled ? (
@@ -89,7 +113,7 @@ export function CountdownOverlay() {
                                 <VolumeX className="size-4" strokeWidth={1.6} />
                             )}
                             <span className="hidden text-[10px] tracking-[0.18em] uppercase sm:inline">
-                                {isSoundEnabled ? 'Son actif' : 'Ambiance'}
+                                {isSoundEnabled ? 'Musique active' : 'Écouter'}
                             </span>
                         </button>
                     )}
