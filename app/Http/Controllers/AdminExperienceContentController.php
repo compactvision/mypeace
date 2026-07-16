@@ -117,6 +117,29 @@ class AdminExperienceContentController extends Controller
         return back()->with('status', 'Contenu supprimé.');
     }
 
+    public function storeProfilePhoto(
+        Request $request,
+        ExperienceContent $content,
+        ExperienceImageService $images,
+    ): RedirectResponse {
+        abort_unless($content->type === 'settings', 422, 'La photo de profil doit être liée aux réglages généraux.');
+
+        $validated = $request->validate([
+            'photo' => ['required', 'image', 'max:10240'],
+        ], [
+            'photo.required' => 'Choisissez une photo de profil.',
+            'photo.image' => 'Le fichier sélectionné doit être une image.',
+            'photo.max' => 'La photo ne doit pas dépasser 10 Mo.',
+        ]);
+        $payload = $content->payload;
+
+        $this->deleteManagedFile($payload['profile_image_url'] ?? null);
+        $payload['profile_image_url'] = $images->store($validated['photo']);
+        $content->update(['payload' => $payload]);
+
+        return back()->with('status', 'Photo de profil mise à jour.');
+    }
+
     public function destroyMedia(ExperienceContent $content, string $media): RedirectResponse
     {
         $payloadKey = match ($media) {

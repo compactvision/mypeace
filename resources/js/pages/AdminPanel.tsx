@@ -416,12 +416,40 @@ function ContentForm({
                             type="file"
                             accept="image/*"
                             className="hidden"
-                            onChange={(event) =>
-                                form.setData(
-                                    'photo',
-                                    event.target.files?.[0] || null,
-                                )
-                            }
+                            onChange={(event) => {
+                                const file = event.target.files?.[0] || null;
+
+                                form.setData('photo', file);
+
+                                if (type === 'settings' && item && file) {
+                                    router.post(
+                                        `/admin/content/${item.id}/profile-photo`,
+                                        { photo: file },
+                                        {
+                                            forceFormData: true,
+                                            preserveScroll: true,
+                                            onSuccess: (page) => {
+                                                const updatedSettings = (
+                                                    page.props as unknown as Props
+                                                ).contents.find(
+                                                    (content) =>
+                                                        content.id === item.id,
+                                                );
+
+                                                form.setData(
+                                                    'profile_image_url',
+                                                    String(
+                                                        updatedSettings?.payload
+                                                            .profile_image_url ||
+                                                            '',
+                                                    ),
+                                                );
+                                                form.setData('photo', null);
+                                            },
+                                        },
+                                    );
+                                }
+                            }}
                         />
                     </label>
                     {selectedPhoto ? (

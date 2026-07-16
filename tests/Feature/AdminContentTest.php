@@ -83,11 +83,7 @@ class AdminContentTest extends TestCase
         $admin = User::factory()->create();
 
         $this->actingAs($admin)
-            ->post("/admin/content/{$settings->id}", [
-                'type' => 'settings',
-                'partner_two_name' => 'Cassy',
-                'access_code' => '2102',
-                'is_active' => true,
+            ->post("/admin/content/{$settings->id}/profile-photo", [
                 'photo' => UploadedFile::fake()->image('profile.jpg'),
             ])
             ->assertRedirect()
@@ -217,6 +213,7 @@ class AdminContentTest extends TestCase
     public function test_content_management_routes_require_authentication(): void
     {
         $this->post('/admin/content')->assertRedirect('/login');
+        $this->post('/admin/content/1/profile-photo')->assertRedirect('/login');
         $this->delete('/admin/content/1/media/photo')->assertRedirect('/login');
         $this->put('/admin/countdown')->assertRedirect('/login');
     }
