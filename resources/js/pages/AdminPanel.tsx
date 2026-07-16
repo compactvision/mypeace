@@ -331,6 +331,21 @@ function ContentForm({
     const photoUrl = String(form.data.photo_url || '');
     const audioUrl = String(form.data.background_audio_url || '');
     const videoUrl = String(form.data.video_url || '');
+    const selectedPhoto =
+        form.data.photo instanceof File ? form.data.photo : null;
+    const selectedPhotoUrl = useMemo(
+        () => (selectedPhoto ? URL.createObjectURL(selectedPhoto) : null),
+        [selectedPhoto],
+    );
+    const photoPreviewUrl = selectedPhotoUrl || photoUrl;
+
+    useEffect(() => {
+        return () => {
+            if (selectedPhotoUrl) {
+                URL.revokeObjectURL(selectedPhotoUrl);
+            }
+        };
+    }, [selectedPhotoUrl]);
 
     return (
         <form
@@ -372,12 +387,12 @@ function ContentForm({
                 )}
             </div>
 
-            {(photoUrl ||
+            {(photoPreviewUrl ||
                 ['memories', 'timeline', 'social_posts'].includes(type)) && (
                 <div className="grid gap-3 sm:grid-cols-[140px_1fr] sm:items-center">
-                    {photoUrl ? (
+                    {photoPreviewUrl ? (
                         <img
-                            src={photoUrl}
+                            src={photoPreviewUrl}
                             alt="Aperçu"
                             className="h-28 w-full rounded-xl object-cover"
                         />
@@ -403,6 +418,45 @@ function ContentForm({
                             }
                         />
                     </label>
+                    {selectedPhoto ? (
+                        <button
+                            type="button"
+                            onClick={() => form.setData('photo', null)}
+                            className="flex items-center justify-center gap-2 rounded-xl border border-destructive/20 px-4 py-2.5 text-xs text-destructive transition hover:bg-destructive/10 sm:col-start-2"
+                        >
+                            <Trash2 className="size-4" /> Annuler la photo
+                            sélectionnée
+                        </button>
+                    ) : (
+                        item &&
+                        photoUrl && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (
+                                        window.confirm(
+                                            'Supprimer définitivement cette photo ?',
+                                        )
+                                    ) {
+                                        router.delete(
+                                            `/admin/content/${item.id}/media/photo`,
+                                            {
+                                                preserveScroll: true,
+                                                onSuccess: () =>
+                                                    form.setData(
+                                                        'photo_url',
+                                                        '',
+                                                    ),
+                                            },
+                                        );
+                                    }
+                                }}
+                                className="flex items-center justify-center gap-2 rounded-xl border border-destructive/20 px-4 py-2.5 text-xs text-destructive transition hover:bg-destructive/10 sm:col-start-2"
+                            >
+                                <Trash2 className="size-4" /> Supprimer la photo
+                            </button>
+                        )
+                    )}
                 </div>
             )}
 
@@ -505,25 +559,44 @@ function ContentForm({
                             }}
                         />
                     </label>
-                    {videoUrl && (
-                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <input
-                                type="checkbox"
-                                checked={Boolean(form.data.remove_video)}
-                                onChange={(event) => {
-                                    form.setData(
-                                        'remove_video',
-                                        event.target.checked,
-                                    );
-
-                                    if (event.target.checked) {
-                                        form.setData('video', null);
+                    {form.data.video instanceof File ? (
+                        <button
+                            type="button"
+                            onClick={() => form.setData('video', null)}
+                            className="flex items-center justify-center gap-2 rounded-xl border border-destructive/20 px-4 py-2.5 text-xs text-destructive transition hover:bg-destructive/10"
+                        >
+                            <Trash2 className="size-4" /> Annuler la vidéo
+                            sélectionnée
+                        </button>
+                    ) : (
+                        item &&
+                        videoUrl && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (
+                                        window.confirm(
+                                            'Supprimer définitivement cette vidéo ?',
+                                        )
+                                    ) {
+                                        router.delete(
+                                            `/admin/content/${item.id}/media/video`,
+                                            {
+                                                preserveScroll: true,
+                                                onSuccess: () =>
+                                                    form.setData(
+                                                        'video_url',
+                                                        '',
+                                                    ),
+                                            },
+                                        );
                                     }
                                 }}
-                                className="size-4 accent-pink"
-                            />
-                            Retirer cette vidéo à l’enregistrement
-                        </label>
+                                className="flex items-center justify-center gap-2 rounded-xl border border-destructive/20 px-4 py-2.5 text-xs text-destructive transition hover:bg-destructive/10"
+                            >
+                                <Trash2 className="size-4" /> Supprimer la vidéo
+                            </button>
+                        )
                     )}
                     {videoSelectionError && (
                         <p className="text-xs text-destructive">

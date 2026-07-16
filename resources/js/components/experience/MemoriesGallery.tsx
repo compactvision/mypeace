@@ -211,6 +211,28 @@ export default function MemoriesGallery({
                         {photoMemories.map((mem, i) => (
                             <motion.article
                                 key={mem.id || i}
+                                role={mem.behind_story ? 'button' : undefined}
+                                tabIndex={mem.behind_story ? 0 : undefined}
+                                aria-label={
+                                    mem.behind_story
+                                        ? `Découvrir l'histoire du souvenir ${mem.title}`
+                                        : undefined
+                                }
+                                onClick={() => {
+                                    if (mem.behind_story) {
+                                        openMemory(mem);
+                                    }
+                                }}
+                                onKeyDown={(event) => {
+                                    if (
+                                        mem.behind_story &&
+                                        (event.key === 'Enter' ||
+                                            event.key === ' ')
+                                    ) {
+                                        event.preventDefault();
+                                        openMemory(mem);
+                                    }
+                                }}
                                 initial={{ opacity: 0, y: 24 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 whileHover={{
@@ -227,7 +249,7 @@ export default function MemoriesGallery({
                                 style={{
                                     rotate: PHOTO_TILTS[i % PHOTO_TILTS.length],
                                 }}
-                                className="relative rounded-[3px] bg-[#f5eee4] p-2 pb-3 shadow-[0_18px_35px_rgba(0,0,0,0.35),0_2px_4px_rgba(0,0,0,0.25)] sm:p-3 sm:pb-4"
+                                className={`group relative rounded-[3px] bg-[#f5eee4] p-2 pb-3 shadow-[0_18px_35px_rgba(0,0,0,0.35),0_2px_4px_rgba(0,0,0,0.25)] sm:p-3 sm:pb-4 ${mem.behind_story ? 'cursor-pointer focus-visible:ring-2 focus-visible:ring-pink focus-visible:ring-offset-4 focus-visible:ring-offset-night-deep focus-visible:outline-none' : ''}`}
                             >
                                 <div className="absolute inset-x-3 top-0 h-px bg-white/80" />
                                 <div className="overflow-hidden bg-[#d9d1c7] shadow-inner">
@@ -267,14 +289,13 @@ export default function MemoriesGallery({
                                         )}
                                     </div>
                                     {mem.behind_story && (
-                                        <button
-                                            type="button"
-                                            onClick={() => openMemory(mem)}
-                                            className="mt-2 flex w-full items-center justify-center gap-1 border-t border-night/10 pt-2 text-[9px] font-semibold tracking-wide text-night/60 uppercase transition-colors hover:text-pink sm:text-[10px]"
+                                        <div
+                                            aria-hidden="true"
+                                            className="mt-2 flex w-full items-center justify-center gap-1 border-t border-night/10 pt-2 text-[9px] font-semibold tracking-wide text-night/60 uppercase transition-colors group-hover:text-pink sm:text-[10px]"
                                         >
                                             <Info className="size-3" />
                                             Behind this memory
-                                        </button>
+                                        </div>
                                     )}
                                 </div>
                             </motion.article>

@@ -135,9 +135,49 @@ class AdminContentTest extends TestCase
         Storage::disk('public')->assertMissing('experience/videos/second.mp4');
     }
 
+    public function test_admin_can_delete_a_photo_or_video_without_deleting_the_memory(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('experience/images/memory.webp', 'photo');
+        Storage::disk('public')->put('experience/videos/memory.mp4', 'video');
+        $memory = ExperienceContent::query()->create([
+            'type' => 'memories',
+            'payload' => [
+                'title' => 'Notre souvenir',
+                'category' => 'fleuve',
+                'photo_url' => '/storage/experience/images/memory.webp',
+                'video_url' => '/storage/experience/videos/memory.mp4',
+            ],
+            'display_order' => 1,
+            'is_active' => true,
+        ]);
+        $admin = User::factory()->create();
+
+        $this->actingAs($admin)
+            ->delete("/admin/content/{$memory->id}/media/photo")
+            ->assertRedirect()
+            ->assertSessionHas('status', 'Photo supprimée.');
+
+        $memory->refresh();
+        $this->assertArrayNotHasKey('photo_url', $memory->payload);
+        $this->assertArrayHasKey('video_url', $memory->payload);
+        Storage::disk('public')->assertMissing('experience/images/memory.webp');
+
+        $this->actingAs($admin)
+            ->delete("/admin/content/{$memory->id}/media/video")
+            ->assertRedirect()
+            ->assertSessionHas('status', 'Vidéo supprimée.');
+
+        $memory->refresh();
+        $this->assertArrayNotHasKey('video_url', $memory->payload);
+        $this->assertDatabaseHas('experience_contents', ['id' => $memory->id]);
+        Storage::disk('public')->assertMissing('experience/videos/memory.mp4');
+    }
+
     public function test_content_management_routes_require_authentication(): void
     {
         $this->post('/admin/content')->assertRedirect('/login');
+        $this->delete('/admin/content/1/media/photo')->assertRedirect('/login');
         $this->put('/admin/countdown')->assertRedirect('/login');
     }
 }

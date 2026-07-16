@@ -115,6 +115,27 @@ class AdminExperienceContentController extends Controller
         return back()->with('status', 'Contenu supprimé.');
     }
 
+    public function destroyMedia(ExperienceContent $content, string $media): RedirectResponse
+    {
+        $payloadKey = match ($media) {
+            'photo' => 'photo_url',
+            'video' => 'video_url',
+            default => abort(404),
+        };
+        $payload = $content->payload;
+        $url = $payload[$payloadKey] ?? null;
+
+        if (! $url) {
+            return back()->with('status', ucfirst($media).' déjà absent(e).');
+        }
+
+        $this->deleteManagedFile($url);
+        unset($payload[$payloadKey]);
+        $content->update(['payload' => $payload]);
+
+        return back()->with('status', $media === 'photo' ? 'Photo supprimée.' : 'Vidéo supprimée.');
+    }
+
     public function updateCountdown(Request $request): RedirectResponse
     {
         $validated = $request->validate([
