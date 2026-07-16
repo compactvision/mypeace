@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\CountdownConfig;
+use Illuminate\Database\Seeder;
 
 class CountdownConfigSeeder extends Seeder
 {
@@ -19,7 +19,7 @@ class CountdownConfigSeeder extends Seeder
             'subtitle' => '21 July 2026',
             'main_message' => 'Every second brings me closer to celebrating My Peace.',
             'alt_message' => 'Five months ago, our story began by the river.',
-            'hidden_message' => 'No matter how long the countdown is, I would still choose you.',
+            'hidden_message' => "Je t'aime Cassy❤️",
             'end_message' => 'Happy five months, My Peace.',
             'signature' => 'From Only You.',
             'is_countdown_enabled' => true,
