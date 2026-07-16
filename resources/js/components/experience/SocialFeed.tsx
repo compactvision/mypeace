@@ -53,6 +53,8 @@ export default function SocialFeed({
         ? content.social_posts
         : FALLBACK_POSTS;
     const settings = content?.settings?.[0];
+    const partnerTwo = settings?.partner_two_name || 'Cassy';
+    const influencer = settings?.influencer_name || 'arky N';
     const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
     return (
@@ -69,13 +71,25 @@ export default function SocialFeed({
                 animate={{ opacity: 1, y: 0 }}
                 className="glass mb-6 rounded-2xl p-5 text-center"
             >
-                <div className="glass-pink glow-pink mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full">
-                    <span className="text-gradient-pink font-heading text-2xl">
-                        C
-                    </span>
+                <div className="glass-pink glow-pink mx-auto mb-3 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full">
+                    {settings?.profile_image_url ? (
+                        <img
+                            src={settings.profile_image_url}
+                            alt={partnerTwo}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                            decoding="async"
+                        />
+                    ) : (
+                        <span className="text-gradient-pink font-heading text-2xl">
+                            {partnerTwo[0]}
+                        </span>
+                    )}
                 </div>
                 <div className="flex items-center justify-center gap-2">
-                    <h2 className="font-heading text-lg text-cream">arky N</h2>
+                    <h2 className="font-heading text-lg text-cream">
+                        {influencer}
+                    </h2>
                     <span className="glass-pink rounded-full px-2 py-0.5 text-[10px] text-powder">
                         My Peace
                     </span>

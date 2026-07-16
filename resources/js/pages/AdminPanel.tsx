@@ -328,7 +328,9 @@ function ContentForm({
         });
     };
 
-    const photoUrl = String(form.data.photo_url || '');
+    const photoPayloadKey =
+        type === 'settings' ? 'profile_image_url' : 'photo_url';
+    const photoUrl = String(form.data[photoPayloadKey] || '');
     const audioUrl = String(form.data.background_audio_url || '');
     const videoUrl = String(form.data.video_url || '');
     const selectedPhoto =
@@ -388,7 +390,9 @@ function ContentForm({
             </div>
 
             {(photoPreviewUrl ||
-                ['memories', 'timeline', 'social_posts'].includes(type)) && (
+                ['settings', 'memories', 'timeline', 'social_posts'].includes(
+                    type,
+                )) && (
                 <div className="grid gap-3 sm:grid-cols-[140px_1fr] sm:items-center">
                     {photoPreviewUrl ? (
                         <img
@@ -405,7 +409,9 @@ function ContentForm({
                         <Upload className="size-4" />
                         {form.data.photo instanceof File
                             ? form.data.photo.name
-                            : 'Choisir une image'}
+                            : type === 'settings'
+                              ? 'Choisir une photo de profil'
+                              : 'Choisir une image'}
                         <input
                             type="file"
                             accept="image/*"
@@ -439,12 +445,12 @@ function ContentForm({
                                         )
                                     ) {
                                         router.delete(
-                                            `/admin/content/${item.id}/media/photo`,
+                                            `/admin/content/${item.id}/media/${type === 'settings' ? 'profile' : 'photo'}`,
                                             {
                                                 preserveScroll: true,
                                                 onSuccess: () =>
                                                     form.setData(
-                                                        'photo_url',
+                                                        photoPayloadKey,
                                                         '',
                                                     ),
                                             },
@@ -454,6 +460,7 @@ function ContentForm({
                                 className="flex items-center justify-center gap-2 rounded-xl border border-destructive/20 px-4 py-2.5 text-xs text-destructive transition hover:bg-destructive/10 sm:col-start-2"
                             >
                                 <Trash2 className="size-4" /> Supprimer la photo
+                                {type === 'settings' ? ' de profil' : ''}
                             </button>
                         )
                     )}

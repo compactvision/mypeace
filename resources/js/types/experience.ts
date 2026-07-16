@@ -13,6 +13,7 @@ export type CoupleSettings = {
     intro_subtitle?: string;
     intro_lines?: string;
     background_audio_url?: string;
+    profile_image_url?: string;
     timeline_title?: string;
     timeline_subtitle?: string;
     reasons_title?: string;

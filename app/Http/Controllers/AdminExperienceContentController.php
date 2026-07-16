@@ -52,8 +52,9 @@ class AdminExperienceContentController extends Controller
         ];
 
         if ($request->hasFile('photo')) {
-            $this->deleteManagedFile($payload['photo_url'] ?? null);
-            $payload['photo_url'] = $images->store($request->file('photo'));
+            $photoPayloadKey = $type === 'settings' ? 'profile_image_url' : 'photo_url';
+            $this->deleteManagedFile($payload[$photoPayloadKey] ?? null);
+            $payload[$photoPayloadKey] = $images->store($request->file('photo'));
         }
 
         if ($request->hasFile('audio')) {
@@ -108,6 +109,7 @@ class AdminExperienceContentController extends Controller
     public function destroy(ExperienceContent $content): RedirectResponse
     {
         $this->deleteManagedFile($content->payload['photo_url'] ?? null);
+        $this->deleteManagedFile($content->payload['profile_image_url'] ?? null);
         $this->deleteManagedFile($content->payload['background_audio_url'] ?? null);
         $this->deleteManagedFile($content->payload['video_url'] ?? null);
         $content->delete();
@@ -119,21 +121,27 @@ class AdminExperienceContentController extends Controller
     {
         $payloadKey = match ($media) {
             'photo' => 'photo_url',
+            'profile' => 'profile_image_url',
             'video' => 'video_url',
             default => abort(404),
         };
         $payload = $content->payload;
         $url = $payload[$payloadKey] ?? null;
+        $mediaLabel = match ($media) {
+            'photo' => 'Photo',
+            'profile' => 'Photo de profil',
+            'video' => 'Vidéo',
+        };
 
         if (! $url) {
-            return back()->with('status', ucfirst($media).' déjà absent(e).');
+            return back()->with('status', $mediaLabel.' déjà absente.');
         }
 
         $this->deleteManagedFile($url);
         unset($payload[$payloadKey]);
         $content->update(['payload' => $payload]);
 
-        return back()->with('status', $media === 'photo' ? 'Photo supprimée.' : 'Vidéo supprimée.');
+        return back()->with('status', $mediaLabel.' supprimée.');
     }
 
     public function updateCountdown(Request $request): RedirectResponse
@@ -182,6 +190,7 @@ class AdminExperienceContentController extends Controller
                 'intro_subtitle' => ['nullable', 'string', 'max:255'],
                 'intro_lines' => ['nullable', 'string', 'max:3000'],
                 'background_audio_url' => ['nullable', 'string', 'max:2000'],
+                'profile_image_url' => ['nullable', 'string', 'max:2000'],
                 'timeline_title' => ['nullable', 'string', 'max:255'],
                 'timeline_subtitle' => ['nullable', 'string', 'max:255'],
                 'reasons_title' => ['nullable', 'string', 'max:255'],

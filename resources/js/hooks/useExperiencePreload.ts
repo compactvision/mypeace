@@ -2,13 +2,18 @@ import { useEffect } from 'react';
 import type { ExperienceCatalogue } from '@/types/experience';
 
 function imageUrls(catalogue: ExperienceCatalogue): string[] {
-    return [
+    const profileUrls = (catalogue.settings ?? [])
+        .map((settings) => settings.profile_image_url)
+        .filter((url): url is string => Boolean(url));
+    const contentUrls = [
         ...(catalogue.timeline ?? []),
         ...(catalogue.memories ?? []),
         ...(catalogue.social_posts ?? []),
     ]
         .map((item) => item.photo_url)
         .filter((url): url is string => Boolean(url));
+
+    return [...profileUrls, ...contentUrls];
 }
 
 export function useExperiencePreload(catalogue: ExperienceCatalogue): void {
@@ -19,8 +24,8 @@ export function useExperiencePreload(catalogue: ExperienceCatalogue): void {
 
         const preloadNext = () => {
             if (cancelled || nextIndex >= urls.length) {
-return;
-}
+                return;
+            }
 
             const image = new Image();
             image.decoding = 'async';

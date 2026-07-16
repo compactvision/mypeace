@@ -112,12 +112,21 @@ export default function MyPeaceHub({
                     transition={{ duration: 0.8 }}
                     className="mb-8 text-center"
                 >
-                    {/* Avatar placeholder */}
                     <div className="relative mx-auto mb-4 h-28 w-28">
                         <div className="glass-pink glow-pink flex h-full w-full items-center justify-center overflow-hidden rounded-full">
-                            <span className="text-gradient-pink font-heading text-3xl">
-                                {partnerTwo[0]}
-                            </span>
+                            {settings?.profile_image_url ? (
+                                <img
+                                    src={settings.profile_image_url}
+                                    alt={partnerTwo}
+                                    className="h-full w-full object-cover"
+                                    loading="eager"
+                                    decoding="async"
+                                />
+                            ) : (
+                                <span className="text-gradient-pink font-heading text-3xl">
+                                    {partnerTwo[0]}
+                                </span>
+                            )}
                         </div>
                         <div className="glow-pink absolute -right-1 -bottom-1 flex h-7 w-7 items-center justify-center rounded-full bg-pink">
                             <Heart className="h-3.5 w-3.5 fill-white text-white" />

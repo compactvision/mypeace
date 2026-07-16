@@ -68,6 +68,46 @@ class AdminContentTest extends TestCase
         Storage::disk('public')->assertExists(str_replace('/storage/', '', $settings->payload['background_audio_url']));
     }
 
+    public function test_admin_can_upload_and_delete_the_profile_photo(): void
+    {
+        Storage::fake('public');
+        $settings = ExperienceContent::query()->create([
+            'type' => 'settings',
+            'payload' => [
+                'partner_two_name' => 'Cassy',
+                'access_code' => '2102',
+            ],
+            'display_order' => 1,
+            'is_active' => true,
+        ]);
+        $admin = User::factory()->create();
+
+        $this->actingAs($admin)
+            ->post("/admin/content/{$settings->id}", [
+                'type' => 'settings',
+                'partner_two_name' => 'Cassy',
+                'access_code' => '2102',
+                'is_active' => true,
+                'photo' => UploadedFile::fake()->image('profile.jpg'),
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $settings->refresh();
+        $profileImage = $settings->payload['profile_image_url'];
+        $this->assertStringStartsWith('/storage/experience/images/', $profileImage);
+        Storage::disk('public')->assertExists(str_replace('/storage/', '', $profileImage));
+
+        $this->actingAs($admin)
+            ->delete("/admin/content/{$settings->id}/media/profile")
+            ->assertRedirect()
+            ->assertSessionHas('status', 'Photo de profil supprimée.');
+
+        $settings->refresh();
+        $this->assertArrayNotHasKey('profile_image_url', $settings->payload);
+        Storage::disk('public')->assertMissing(str_replace('/storage/', '', $profileImage));
+    }
+
     public function test_admin_cannot_upload_music_larger_than_twelve_megabytes(): void
     {
         Storage::fake('public');
